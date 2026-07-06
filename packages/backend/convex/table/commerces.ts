@@ -21,7 +21,12 @@ import {
   normalizeForSearch,
   residesValidator,
 } from "../lib/commerce";
-import { requireAuthenticated } from "../rbac";
+import { requireAuthenticated, requireCommerceOwnerOrAdmin } from "../rbac";
+import {
+  MAX_PHOTO_BYTES,
+  MAX_PHOTO_MB,
+  isAllowedImageType,
+} from "../lib/photos";
 
 /**
  * Commerce — the central entity of the directory (see CONTEXT.md). Always owned
@@ -72,6 +77,24 @@ async function resolvePhotoUrls(
 ): Promise<string[]> {
   const urls = await Promise.all(ids.map((id) => ctx.storage.getUrl(id)));
   return urls.filter((url): url is string => url !== null);
+}
+
+/**
+ * Resolve a fiche's ordered photos while KEEPING their storage id — the shape
+ * the owner's photo manager needs to reorder and delete by id (the public
+ * projection only exposes URLs). Preserves order and every entry, so the
+ * reorder set stays complete even if a blob momentarily fails to resolve.
+ */
+async function resolveOwnerPhotos(
+  ctx: QueryCtx,
+  ids: Doc<"commerces">["photos"],
+): Promise<{ storageId: Doc<"commerces">["photos"][number]; url: string | null }[]> {
+  return await Promise.all(
+    ids.map(async (storageId) => ({
+      storageId,
+      url: await ctx.storage.getUrl(storageId),
+    })),
+  );
 }
 
 /**
@@ -221,7 +244,7 @@ export const getPublicById = query({
  * Only ever returned to the owner (see `myCommerce`), never to the public.
  */
 export async function toOwnerCommerce(ctx: QueryCtx, doc: Doc<"commerces">) {
-  const photos = await resolvePhotoUrls(ctx, doc.photos);
+  const photos = await resolveOwnerPhotos(ctx, doc.photos);
 
   return {
     _id: doc._id,
@@ -373,5 +396,144 @@ export const submitCommerce = mutation({
     }
 
     return commerceId;
+  },
+});
+
+// ===========================================================================
+// Photos — the Entrepreneur's fiche vitrine (upload / order / delete).
+//
+// Every mutation is guarded by `requireCommerceOwnerOrAdmin`, enforcing the
+// glossary rule « seul le propriétaire (ou un admin) modifie les photos d'une
+// fiche ». The `photos` array is an ORDERED list of Convex storage ids: its
+// order is the order rendered by the public carousel, and its first element is
+// the card visual (see `apps/web`). Photos never feed the search haystack, so
+// they never touch `searchText`.
+// ===========================================================================
+
+/**
+ * Owner-guarded upload URL for a fiche photo. Mirrors `storage.generateUploadUrl`
+ * but refuses anyone who is not the Commerce owner (or a Super admin), so upload
+ * tokens are only ever minted for a fiche the caller may edit. The back-office
+ * POSTs the (client-compressed) image to this URL, then calls `addPhoto` with
+ * the returned storage id.
+ */
+export const generatePhotoUploadUrl = mutation({
+  args: { commerceId: v.id("commerces") },
+  handler: async (ctx, args) => {
+    await requireCommerceOwnerOrAdmin(ctx, args.commerceId);
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
+/**
+ * Attach an uploaded image to a fiche, appended at the end of the ordered
+ * `photos` list. Validates the stored blob before attaching: it must be an
+ * image and must not exceed the size cap (`MAX_PHOTO_BYTES`). The authoritative
+ * content type recorded by Convex storage wins, falling back to the
+ * client-declared `contentType` when storage did not record one.
+ *
+ * A rejected blob is deleted so no orphan lingers in storage — which is why a
+ * validation failure returns `{ ok: false, error }` rather than throwing: a
+ * thrown mutation rolls back its whole transaction, including the cleanup
+ * delete, whereas a returned result commits it. The back-office surfaces
+ * `error` as a toast. Ownership violations still throw (not a user-input error).
+ */
+export const addPhoto = mutation({
+  args: {
+    commerceId: v.id("commerces"),
+    storageId: v.id("_storage"),
+    contentType: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { commerce } = await requireCommerceOwnerOrAdmin(
+      ctx,
+      args.commerceId,
+    );
+
+    const metadata = await ctx.db.system.get(args.storageId);
+    if (!metadata) {
+      return { ok: false as const, error: "No se encontró el archivo subido." };
+    }
+
+    const contentType = metadata.contentType ?? args.contentType;
+    if (!isAllowedImageType(contentType)) {
+      await ctx.storage.delete(args.storageId);
+      return { ok: false as const, error: "Solo se permiten imágenes." };
+    }
+    if (metadata.size > MAX_PHOTO_BYTES) {
+      await ctx.storage.delete(args.storageId);
+      return {
+        ok: false as const,
+        error: `La imagen supera el tamaño máximo de ${MAX_PHOTO_MB} MB.`,
+      };
+    }
+
+    await ctx.db.patch(args.commerceId, {
+      photos: [...commerce.photos, args.storageId],
+    });
+    return { ok: true as const, storageId: args.storageId };
+  },
+});
+
+/**
+ * Persist a new photo order for a fiche (back-office drag-and-drop). The given
+ * `photoIds` MUST be a permutation of the fiche's current photos — same members,
+ * no addition, removal nor duplicate — so reordering can never smuggle in an
+ * unvalidated blob nor drop one. Ownership-guarded.
+ */
+export const reorderPhotos = mutation({
+  args: {
+    commerceId: v.id("commerces"),
+    photoIds: v.array(v.id("_storage")),
+  },
+  handler: async (ctx, args) => {
+    const { commerce } = await requireCommerceOwnerOrAdmin(
+      ctx,
+      args.commerceId,
+    );
+
+    const current = commerce.photos as string[];
+    const next = args.photoIds as string[];
+    const currentSet = new Set(current);
+    const nextSet = new Set(next);
+    const isPermutation =
+      current.length === next.length &&
+      nextSet.size === next.length &&
+      next.every((id) => currentSet.has(id));
+    if (!isPermutation) {
+      throw new ConvexError({
+        message: "El nuevo orden de fotos no es válido.",
+      });
+    }
+
+    await ctx.db.patch(args.commerceId, { photos: args.photoIds });
+  },
+});
+
+/**
+ * Detach a photo from a fiche and delete its blob from storage. The photo must
+ * belong to the fiche. Ownership-guarded.
+ */
+export const removePhoto = mutation({
+  args: {
+    commerceId: v.id("commerces"),
+    storageId: v.id("_storage"),
+  },
+  handler: async (ctx, args) => {
+    const { commerce } = await requireCommerceOwnerOrAdmin(
+      ctx,
+      args.commerceId,
+    );
+
+    if (!commerce.photos.some((id) => id === args.storageId)) {
+      throw new ConvexError({
+        message: "La foto no pertenece a este negocio.",
+      });
+    }
+
+    await ctx.db.patch(args.commerceId, {
+      photos: commerce.photos.filter((id) => id !== args.storageId),
+    });
+    await ctx.storage.delete(args.storageId);
   },
 });

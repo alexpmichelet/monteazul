@@ -5,6 +5,7 @@ import { api } from "@packages/backend/convex/_generated/api";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PhotoManager } from "@/components/app/entrepreneur/photo-manager";
 
 type Commerce = NonNullable<
   FunctionReturnType<typeof api.table.commerces.myCommerce>
@@ -88,6 +89,15 @@ export function MiNegocioView({ commerce }: { commerce: Commerce }) {
             <Row label="¿Resides en Monteazul?" value={commerce.resides} />
             <Row label="Notas" value={commerce.notas} />
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Fotos del negocio</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PhotoManager commerce={commerce} />
         </CardContent>
       </Card>
     </div>
