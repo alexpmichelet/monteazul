@@ -17,6 +17,7 @@ import type * as lib_auth_ResendOTP from "../lib/auth/ResendOTP.js";
 import type * as lib_auth_ResendOTPPasswordReset from "../lib/auth/ResendOTPPasswordReset.js";
 import type * as lib_auth_passwordCrypto from "../lib/auth/passwordCrypto.js";
 import type * as lib_auth_roles from "../lib/auth/roles.js";
+import type * as lib_auth_seededAccount from "../lib/auth/seededAccount.js";
 import type * as lib_commerce from "../lib/commerce.js";
 import type * as lib_horario from "../lib/horario.js";
 import type * as lib_photos from "../lib/photos.js";
@@ -34,6 +35,7 @@ import type * as table_commerces from "../table/commerces.js";
 import type * as table_events from "../table/events.js";
 import type * as table_favorites from "../table/favorites.js";
 import type * as table_feedback from "../table/feedback.js";
+import type * as table_seededEntreprise from "../table/seededEntreprise.js";
 import type * as table_users from "../table/users.js";
 import type * as utils_generateFunctions from "../utils/generateFunctions.js";
 
@@ -53,6 +55,7 @@ declare const fullApi: ApiFromModules<{
   "lib/auth/ResendOTPPasswordReset": typeof lib_auth_ResendOTPPasswordReset;
   "lib/auth/passwordCrypto": typeof lib_auth_passwordCrypto;
   "lib/auth/roles": typeof lib_auth_roles;
+  "lib/auth/seededAccount": typeof lib_auth_seededAccount;
   "lib/commerce": typeof lib_commerce;
   "lib/horario": typeof lib_horario;
   "lib/photos": typeof lib_photos;
@@ -70,6 +73,7 @@ declare const fullApi: ApiFromModules<{
   "table/events": typeof table_events;
   "table/favorites": typeof table_favorites;
   "table/feedback": typeof table_feedback;
+  "table/seededEntreprise": typeof table_seededEntreprise;
   "table/users": typeof table_users;
   "utils/generateFunctions": typeof utils_generateFunctions;
 }>;
