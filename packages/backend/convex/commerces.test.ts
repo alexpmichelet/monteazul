@@ -2,6 +2,7 @@ import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import { commerceSearchText } from "./lib/commerce";
 import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.*s");
@@ -20,6 +21,7 @@ type CommerceSeed = {
   category: string;
   estado: "pendiente" | "publicado" | "suspendido";
   subcategories?: string[];
+  description?: string;
 };
 
 async function insertCommerce(
@@ -27,12 +29,19 @@ async function insertCommerce(
   ownerId: Id<"users">,
   seed: CommerceSeed,
 ) {
+  const description = seed.description ?? "Descripción de prueba.";
   return await t.run((ctx) =>
     ctx.db.insert("commerces", {
       name: seed.name,
       category: seed.category,
       subcategories: seed.subcategories,
-      description: "Descripción de prueba.",
+      description,
+      searchText: commerceSearchText({
+        name: seed.name,
+        category: seed.category,
+        subcategories: seed.subcategories,
+        description,
+      }),
       whatsapp: "3001234567",
       photos: [],
       horario: { mode: "plages", days: "Lun – Vie", from: 540, to: 1080 },
@@ -129,6 +138,133 @@ describe("listPublicByCategory", () => {
     });
     const sections = await t.query(api.table.commerces.listPublicByCategory, {});
     expect(sections).toEqual([]);
+  });
+});
+
+describe("searchPublic", () => {
+  test("is accent-insensitive: «panaderia» finds «Panadería»", async () => {
+    const t = convexTest(schema, modules);
+    const owner = await makeOwner(t, "owner@example.com");
+    await insertCommerce(t, owner, {
+      name: "Panadería El Sol",
+      category: "Comida y bebida",
+      subcategories: ["Panadería y repostería"],
+      estado: "publicado",
+    });
+
+    const sections = await t.query(api.table.commerces.searchPublic, {
+      text: "panaderia",
+    });
+    const names = sections.flatMap((s) => s.commerces.map((c) => c.name));
+    expect(names).toEqual(["Panadería El Sol"]);
+  });
+
+  test("is case-insensitive and matches on the category: «BELLEZA» finds Belleza", async () => {
+    const t = convexTest(schema, modules);
+    const owner = await makeOwner(t, "owner@example.com");
+    await insertCommerce(t, owner, {
+      name: "Estilo Aura",
+      category: "Belleza y cuidado personal",
+      estado: "publicado",
+    });
+    await insertCommerce(t, owner, {
+      name: "TecnoFix",
+      category: "Tecnología",
+      estado: "publicado",
+    });
+
+    const sections = await t.query(api.table.commerces.searchPublic, {
+      text: "BELLEZA",
+    });
+    const names = sections.flatMap((s) => s.commerces.map((c) => c.name));
+    expect(names).toEqual(["Estilo Aura"]);
+  });
+
+  test("matches on a word of the description", async () => {
+    const t = convexTest(schema, modules);
+    const owner = await makeOwner(t, "owner@example.com");
+    await insertCommerce(t, owner, {
+      name: "TecnoFix MZ",
+      category: "Tecnología",
+      description: "Reparación de celulares y computadores con garantía.",
+      estado: "publicado",
+    });
+    await insertCommerce(t, owner, {
+      name: "Moda Andina",
+      category: "Accesorios y ropa",
+      description: "Ropa y accesorios de diseño local.",
+      estado: "publicado",
+    });
+
+    const sections = await t.query(api.table.commerces.searchPublic, {
+      text: "reparacion",
+    });
+    const names = sections.flatMap((s) => s.commerces.map((c) => c.name));
+    expect(names).toEqual(["TecnoFix MZ"]);
+  });
+
+  test("never returns pendiente nor suspendido, even when they match the query", async () => {
+    const t = convexTest(schema, modules);
+    const owner = await makeOwner(t, "owner@example.com");
+    for (const estado of ["publicado", "pendiente", "suspendido"] as const) {
+      await insertCommerce(t, owner, {
+        name: `Café ${estado}`,
+        category: "Comida y bebida",
+        subcategories: ["Almuerzos y comida típica"],
+        description: "Café de origen y almuerzos caseros.",
+        estado,
+      });
+    }
+
+    const sections = await t.query(api.table.commerces.searchPublic, {
+      text: "cafe",
+    });
+    const names = sections.flatMap((s) => s.commerces.map((c) => c.name));
+    expect(names).toEqual(["Café publicado"]);
+  });
+
+  test("combines the query with the active category filter", async () => {
+    const t = convexTest(schema, modules);
+    const owner = await makeOwner(t, "owner@example.com");
+    await insertCommerce(t, owner, {
+      name: "Tejidos a mano",
+      category: "Hogar y artesanías",
+      description: "Piezas artesanal hechas a mano por encargo.",
+      estado: "publicado",
+    });
+    await insertCommerce(t, owner, {
+      name: "Pan del día",
+      category: "Comida y bebida",
+      subcategories: ["Panadería y repostería"],
+      description: "Pan artesanal horneado a diario.",
+      estado: "publicado",
+    });
+
+    const sections = await t.query(api.table.commerces.searchPublic, {
+      text: "artesanal",
+      category: "Hogar y artesanías",
+    });
+    const names = sections.flatMap((s) => s.commerces.map((c) => c.name));
+    expect(names).toEqual(["Tejidos a mano"]);
+  });
+
+  test("with no query returns the published listing (never pendiente/suspendido)", async () => {
+    const t = convexTest(schema, modules);
+    const owner = await makeOwner(t, "owner@example.com");
+    await insertCommerce(t, owner, {
+      name: "Solo publicado",
+      category: "Mascotas",
+      estado: "publicado",
+    });
+    await insertCommerce(t, owner, {
+      name: "Oculto",
+      category: "Mascotas",
+      estado: "pendiente",
+    });
+
+    const sections = await t.query(api.table.commerces.searchPublic, {});
+    const names = sections.flatMap((s) => s.commerces.map((c) => c.name));
+    expect(names).toEqual(["Solo publicado"]);
   });
 });
 

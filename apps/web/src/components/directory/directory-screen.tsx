@@ -17,14 +17,6 @@ import {
 } from "@/components/directory";
 import { CommerceCard } from "./commerce-card";
 
-/** Accent-insensitive, case-insensitive normalisation for search matching. */
-function normalize(value: string): string {
-  return value
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase();
-}
-
 function countLabel(count: number): string {
   return count === 1 ? "1 negocio" : `${count} negocios`;
 }
@@ -36,9 +28,19 @@ function countLabel(count: number): string {
  * real-time opening badge. Only `publicado` fiches are shown (backend query).
  */
 export function DirectoryScreen() {
-  const sections = useQuery(api.table.commerces.listPublicByCategory);
   const [activeKey, setActiveKey] = React.useState<CategoryKey>("todos");
   const [queryText, setQueryText] = React.useState("");
+
+  const activeCategory = CATEGORY_CHIP_BY_KEY[activeKey].category;
+  const trimmedQuery = queryText.trim();
+
+  // Search (accent- and case-insensitive) and the active category chip both
+  // resolve server-side against the normalised `search_text` index — the query
+  // returns only `publicado` fiches, already grouped and filtered.
+  const sections = useQuery(api.table.commerces.searchPublic, {
+    text: trimmedQuery.length > 0 ? trimmedQuery : undefined,
+    category: activeCategory ?? undefined,
+  });
 
   // Recompute the opening badges every minute so "Abierto/Cerrado" stays live.
   const [now, setNow] = React.useState(() => new Date());
@@ -46,34 +48,6 @@ export function DirectoryScreen() {
     const id = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(id);
   }, []);
-
-  const activeCategory = CATEGORY_CHIP_BY_KEY[activeKey].category;
-  const q = normalize(queryText.trim());
-
-  const visibleSections = React.useMemo(() => {
-    if (!sections) return undefined;
-    return sections
-      .filter(
-        (section) =>
-          activeCategory === null || section.category === activeCategory,
-      )
-      .map((section) => {
-        const commerces = section.commerces.filter((commerce) => {
-          if (!q) return true;
-          return [
-            commerce.name,
-            commerce.category,
-            ...(commerce.subcategories ?? []),
-            commerce.description,
-          ].some((field) => normalize(field).includes(q));
-        });
-        return { ...section, commerces, count: commerces.length };
-      })
-      .filter((section) => section.commerces.length > 0);
-  }, [sections, activeCategory, q]);
-
-  const isLoading = visibleSections === undefined;
-  const noResults = !isLoading && visibleSections.length === 0;
 
   return (
     <div className="mx-auto min-h-screen max-w-[480px] bg-surface shadow-[0_0_60px_rgba(20,30,50,0.1)]">
@@ -106,12 +80,12 @@ export function DirectoryScreen() {
       </header>
 
       <div className="pb-7">
-        {isLoading ? (
+        {sections === undefined ? (
           <LoadingSections />
-        ) : noResults ? (
+        ) : sections.length === 0 ? (
           <EmptyState query={queryText} />
         ) : (
-          visibleSections.map((section) => (
+          sections.map((section) => (
             <section key={section.category} className="pb-0.5 pt-[18px]">
               <div className="flex items-baseline justify-between px-4 pb-[11px]">
                 <span className="text-lg font-bold tracking-[-0.01em] text-ink">

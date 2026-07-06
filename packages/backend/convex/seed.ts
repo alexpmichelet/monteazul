@@ -1,6 +1,6 @@
 import type { CommerceCategory } from "@packages/shared/categories";
 import { internalMutation } from "./_generated/server";
-import { assertValidCommerce } from "./lib/commerce";
+import { assertValidCommerce, commerceSearchText } from "./lib/commerce";
 import type { Estado, ResidesValue } from "./lib/commerce";
 import type { Horario } from "./lib/horario";
 
@@ -320,6 +320,12 @@ export const seedDev = internalMutation({
         category: seed.category,
         subcategories: seed.subcategories,
         description: seed.description,
+        searchText: commerceSearchText({
+          name: seed.name,
+          category: seed.category,
+          subcategories: seed.subcategories,
+          description: seed.description,
+        }),
         whatsapp: seed.whatsapp,
         photos: [],
         horario: seed.horario,

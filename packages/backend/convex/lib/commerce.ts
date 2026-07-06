@@ -90,3 +90,40 @@ export function assertValidCommerce(input: ValidatableCommerce): void {
     );
   }
 }
+
+/**
+ * Accent- and case-insensitive normalisation for search: NFD-decompose, strip
+ * the combining diacritics, lowercase. « Panadería » → « panaderia », so
+ * « panaderia » or « BELLEZA » match regardless of accents or case. Convex has
+ * no native accent folding, hence the normalised field maintained below.
+ */
+export function normalizeForSearch(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase();
+}
+
+export type SearchableCommerce = {
+  name: string;
+  category: string;
+  subcategories?: string[];
+  description: string;
+};
+
+/**
+ * The normalised full-text haystack indexed for Commerce search — name,
+ * category, sub-categories and description, joined then normalised. It MUST be
+ * recomputed on every Commerce write (see `commerces.searchText`) so the search
+ * index stays in sync with the document.
+ */
+export function commerceSearchText(input: SearchableCommerce): string {
+  return normalizeForSearch(
+    [
+      input.name,
+      input.category,
+      ...(input.subcategories ?? []),
+      input.description,
+    ].join(" "),
+  );
+}
