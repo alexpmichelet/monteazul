@@ -36,32 +36,7 @@ import {
   type StatsGranularity,
 } from "@/components/app/entrepreneur/granularity";
 import { StatsEvolutionChart } from "@/components/app/entrepreneur/stats-evolution-chart";
-
-function StatCard({
-  label,
-  value,
-  testId,
-  icon,
-}: {
-  label: string;
-  value: number;
-  testId: string;
-  icon: React.ReactNode;
-}) {
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
-        <CardDescription>{label}</CardDescription>
-        <span className="text-muted-foreground">{icon}</span>
-      </CardHeader>
-      <CardContent>
-        <p data-testid={testId} className="text-3xl font-semibold tabular-nums">
-          {value.toLocaleString("es-CO")}
-        </p>
-      </CardContent>
-    </Card>
-  );
-}
+import { StatCard } from "@/components/app/stats/stat-card";
 
 /**
  * « Estadísticas globales » — the Super admin's site-wide dashboard (story #15).
