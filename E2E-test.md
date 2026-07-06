@@ -60,3 +60,9 @@ Format par entrée :
 - [ ] **Anonyme → invitation** : sans session, toucher le cœur d'une carte OU de la fiche → le dialog « Guarda tus negocios favoritos » s'ouvre, aucun favori créé ; ouvrir « Mis guardados » propose de se connecter.
 - [ ] **Parcours complet** : Crear cuenta (email/mot de passe) → vérification → connecté, retour à l'accueil → cœur plein depuis une carte ET depuis la fiche → « Mis guardados » liste les deux → Cerrar sesión → les cœurs redeviennent vides.
 - [ ] **Filtre `publicado`** : User ayant un favori dont la fiche passe en `suspendido` → la fiche disparaît de « Mis guardados » sans erreur ; toggler deux fois le même cœur ne crée jamais de doublon (paire user+commerce unique).
+
+## #10 — Soumission de fiche entrepreneur et attribution du rôle entreprise
+
+- [ ] **Inscription → soumission → Mi negocio** : précondition : aucun compte. Action : `/registro` (compte + login), remplir le wizard (catégorie « Comida y bebida » → cocher des sous-catégories, WhatsApp 10 chiffres, Horario « Por horas »), envoyer. Résultat observable : redirection vers `/mi-negocio` affichant la fiche avec le badge « Pendiente de aprobación », et la fiche n'apparaît PAS sur l'annuaire public.
+- [ ] **Validation inline** : préconditions : sur le wizard. Action : saisir un WhatsApp de 9 chiffres (ou une sous-catégorie avec une catégorie ≠ Comida) et envoyer. Résultat observable : message d'erreur en espagnol affiché dans le formulaire, aucune fiche créée, rôle inchangé.
+- [ ] **1:1 strict** : préconditions : un Entrepreneur ayant déjà soumis sa fiche, reconnecté via `/acceso`. Action : aller sur `/mi-negocio/nueva`. Résultat observable : redirection automatique vers `/mi-negocio` (pas de 2e soumission possible), la fiche existante reste affichée.
