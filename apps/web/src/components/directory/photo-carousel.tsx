@@ -4,9 +4,7 @@ import * as React from "react";
 import Image from "next/image";
 
 import { cn } from "@/lib/utils";
-
-/** Placeholder gradient shown when a Commerce has no photo (matches the prototype and the cards). */
-const PLACEHOLDER_GRADIENT = "linear-gradient(135deg,#eef1f6,#e1e8f1)";
+import { PHOTO_PLACEHOLDER_GRADIENT } from "@/lib/commerce-media";
 
 /**
  * Swipeable photo carousel of the Commerce detail screen, faithful to the
@@ -46,7 +44,11 @@ export function PhotoCarousel({
             data-testid="carousel-slide"
             data-placeholder={photo === null}
             className="relative flex h-[300px] w-full flex-none snap-center items-center justify-center overflow-hidden"
-            style={photo === null ? { background: PLACEHOLDER_GRADIENT } : undefined}
+            style={
+              photo === null
+                ? { background: PHOTO_PLACEHOLDER_GRADIENT }
+                : undefined
+            }
           >
             {photo !== null ? (
               <Image

@@ -7,6 +7,7 @@ import type { FunctionReturnType } from "convex/server";
 import { api } from "@packages/backend/convex/_generated/api";
 import { commerceStatus } from "@packages/backend/convex/lib/horario";
 
+import { PHOTO_PLACEHOLDER_GRADIENT } from "@/lib/commerce-media";
 import { StatusBadge } from "./status-badge";
 import { WhatsAppButton } from "./whatsapp-button";
 
@@ -15,9 +16,6 @@ type Sections = FunctionReturnType<
 >;
 export type DirectorySection = Sections[number];
 export type DirectoryCommerce = DirectorySection["commerces"][number];
-
-/** Placeholder gradient used when a Commerce has no photo yet (matches the prototype). */
-const PLACEHOLDER_GRADIENT = "linear-gradient(135deg,#eef1f6,#e1e8f1)";
 
 /**
  * Commerce card of the directory list, faithful to the Claude Design prototype:
@@ -49,7 +47,7 @@ function CommerceCard({
     >
       <div
         className="relative flex h-[132px] items-end overflow-hidden rounded-card p-2.5"
-        style={photo ? undefined : { background: PLACEHOLDER_GRADIENT }}
+        style={photo ? undefined : { background: PHOTO_PLACEHOLDER_GRADIENT }}
       >
         {photo ? (
           <Image
