@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { FunctionReturnType } from "convex/server";
 import { api } from "@packages/backend/convex/_generated/api";
@@ -63,6 +63,7 @@ type ClickArgs = { commerceId: string; visitorId: string };
 
 function renderDetail(result: DetailCommerce | null | undefined) {
   const recorded: ClickArgs[] = [];
+  const visits: ClickArgs[] = [];
   const client = new ConvexReactClientFake();
   client.registerQueryFake(
     api.table.commerces.getPublicById,
@@ -75,10 +76,14 @@ function renderDetail(result: DetailCommerce | null | undefined) {
       return null;
     },
   );
+  client.registerMutationFake(api.table.events.recordVisit, (args) => {
+    visits.push(args as ClickArgs);
+    return null;
+  });
   const view = renderWithConvex(<CommerceDetailScreen id="commerce_1" />, {
     client,
   });
-  return { ...view, recorded };
+  return { ...view, recorded, visits };
 }
 
 describe("CommerceDetailScreen", () => {
@@ -166,5 +171,19 @@ describe("CommerceDetailScreen", () => {
     renderDetail(makeCommerce());
     await user.click(screen.getByRole("button", { name: /Volver/ }));
     expect(back).toHaveBeenCalledTimes(1);
+  });
+
+  it("records a Visite once when the fiche opens, with the opaque visitor id", async () => {
+    const { visits } = renderDetail(makeCommerce());
+
+    await waitFor(() => expect(visits).toHaveLength(1));
+    expect(visits[0].commerceId).toBe("commerce_1");
+    expect(typeof visits[0].visitorId).toBe("string");
+    expect(visits[0].visitorId.length).toBeGreaterThan(0);
+  });
+
+  it("does not record a Visite while loading or when the fiche is not found", () => {
+    expect(renderDetail(undefined).visits).toHaveLength(0);
+    expect(renderDetail(null).visits).toHaveLength(0);
   });
 });
