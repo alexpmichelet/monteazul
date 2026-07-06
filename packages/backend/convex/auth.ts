@@ -1,48 +1,39 @@
-import Apple from "@auth/core/providers/apple";
-import GitHub from "@auth/core/providers/github";
 import Google from "@auth/core/providers/google";
 import { Password } from "@convex-dev/auth/providers/Password";
 import { convexAuth } from "@convex-dev/auth/server";
-import { ConvexError } from "convex/values";
 import { APP_SLUG } from "@packages/shared";
+import type { MutationCtx } from "./_generated/server";
+import { hashSecret, verifySecret } from "./lib/auth/passwordCrypto";
 import { ResendOTP } from "./lib/auth/ResendOTP";
 import { ResendOTPPasswordReset } from "./lib/auth/ResendOTPPasswordReset";
+import { assignDefaultRole } from "./rbac";
 
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
   providers: [
+    // Email + password, keeping the existing OTP verification and email-based
+    // password reset flows (both via Resend). The plaintext `crypto`
+    // placeholder from the template is replaced by real Scrypt hashing.
     Password({
       verify: ResendOTP,
       reset: ResendOTPPasswordReset,
       crypto: {
-        hashSecret: async (secret) => {
-          return secret;
-        },
-        verifySecret: async (secret, hash) => {
-          if (secret === hash) {
-            return true;
-          }
-          throw new ConvexError({ message: "Email or password is incorrect" });
-        },
+        hashSecret,
+        verifySecret,
       },
     }),
-    GitHub,
+    // Google OAuth (one-click sign-in). GitHub and Apple were removed.
     Google,
-    Apple({
-      profile: (appleInfo) => {
-        const name = appleInfo.user
-          ? `${appleInfo.user.name.firstName} ${appleInfo.user.name.lastName}`
-          : undefined;
-        return {
-          id: appleInfo.sub,
-          name: name,
-          email: appleInfo.email,
-        };
-      },
-    }),
   ],
   callbacks: {
+    /**
+     * Grant the default `user` role to every newly created account (Password
+     * sign-up or Google sign-in). Existing accounts and already-assigned roles
+     * are left untouched.
+     */
+    async afterUserCreatedOrUpdated(ctx, { userId, existingUserId }) {
+      await assignDefaultRole(ctx as MutationCtx, { userId, existingUserId });
+    },
     async redirect({ redirectTo }) {
-      console.log("redirectTo: ", redirectTo);
       if (
         redirectTo !== `${APP_SLUG}://` &&
         redirectTo !== "http://localhost:3000"

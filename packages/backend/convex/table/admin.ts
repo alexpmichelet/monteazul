@@ -2,30 +2,15 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { paginationOptsValidator } from "convex/server";
 import { ConvexError, v } from "convex/values";
 import { internal } from "../_generated/api";
-import { internalMutation, mutation, MutationCtx, query, QueryCtx } from "../_generated/server";
+import { internalMutation, mutation, query } from "../_generated/server";
+import { roleValidator } from "../lib/auth/roles";
+import { requireAdmin } from "../rbac";
 import { adminInviteValidator } from "./adminInvites";
 
-/**
- * Helper function to verify the current user is an admin.
- * Throws an error if not authenticated or not an admin.
- */
-export async function requireAdmin(ctx: QueryCtx | MutationCtx) {
-  const userId = await getAuthUserId(ctx);
-  if (userId === null) {
-    throw new ConvexError({ message: "Not authenticated" });
-  }
-
-  const user = await ctx.db.get(userId);
-  if (!user) {
-    throw new ConvexError({ message: "User not found" });
-  }
-
-  if (user.role !== "admin") {
-    throw new ConvexError({ message: "Access denied. Admin role required." });
-  }
-
-  return { userId, user };
-}
+// `requireAdmin` (the Super admin guard) lives in `../rbac` alongside the other
+// role guards; re-exported here for the existing callers importing it from this
+// module.
+export { requireAdmin };
 
 /**
  * Generate a secure random token for admin invites.
@@ -59,7 +44,7 @@ export const currentAdmin = query({
       bio: v.optional(v.string()),
       birthDate: v.optional(v.string()),
       hasCompletedOnboarding: v.optional(v.boolean()),
-      role: v.optional(v.union(v.literal("user"), v.literal("admin"))),
+      role: v.optional(roleValidator),
       banned: v.optional(v.boolean()),
       banReason: v.optional(v.string()),
       banExpires: v.optional(v.number()),
@@ -101,7 +86,7 @@ export const listUsers = query({
   //       bio: v.optional(v.string()),
   //       birthDate: v.optional(v.string()),
   //       hasCompletedOnboarding: v.optional(v.boolean()),
-  //       role: v.optional(v.union(v.literal("user"), v.literal("admin"))),
+  //       role: v.optional(roleValidator),
   //     })
   //   ),
   //   isDone: v.boolean(),
@@ -407,7 +392,7 @@ const userValidator = v.object({
   bio: v.optional(v.string()),
   birthDate: v.optional(v.string()),
   hasCompletedOnboarding: v.optional(v.boolean()),
-  role: v.optional(v.union(v.literal("user"), v.literal("admin"))),
+  role: v.optional(roleValidator),
   banned: v.optional(v.boolean()),
   banReason: v.optional(v.string()),
   banExpires: v.optional(v.number()),
@@ -436,7 +421,7 @@ export const updateUser = mutation({
     updates: v.object({
       name: v.optional(v.string()),
       bio: v.optional(v.string()),
-      role: v.optional(v.union(v.literal("user"), v.literal("admin"))),
+      role: v.optional(roleValidator),
     }),
   },
   returns: v.null(),

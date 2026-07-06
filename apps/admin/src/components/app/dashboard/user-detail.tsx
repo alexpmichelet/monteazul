@@ -48,7 +48,7 @@ import { Separator } from "@/components/ui/separator";
 const formSchema = z.object({
   name: z.string().optional(),
   bio: z.string().optional(),
-  role: z.enum(["user", "admin"]),
+  role: z.enum(["user", "entreprise", "admin"]),
 });
 
 interface UserDetailProps {

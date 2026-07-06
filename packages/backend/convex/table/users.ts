@@ -2,6 +2,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { defineTable } from "convex/server";
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
+import { roleValidator } from "../lib/auth/roles";
 import { generateFunctions } from "../utils/generateFunctions";
 
 const documentSchema = {
@@ -18,7 +19,7 @@ const documentSchema = {
   bio: v.optional(v.string()),
   birthDate: v.optional(v.string()),
   hasCompletedOnboarding: v.optional(v.boolean()),
-  role: v.optional(v.union(v.literal("user"), v.literal("admin"))),
+  role: v.optional(roleValidator),
 
   // Ban fields
   banned: v.optional(v.boolean()),
@@ -40,7 +41,7 @@ const partialSchema = {
   bio: v.optional(v.string()),
   birthDate: v.optional(v.string()),
   hasCompletedOnboarding: v.optional(v.boolean()),
-  role: v.optional(v.union(v.literal("user"), v.literal("admin"))),
+  role: v.optional(roleValidator),
 
   // Ban fields
   banned: v.optional(v.boolean()),
