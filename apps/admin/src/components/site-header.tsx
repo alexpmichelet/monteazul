@@ -35,6 +35,20 @@ export function SiteHeader() {
       }
     }
 
+    if (segments[0] === "negocios") {
+      if (segments.length === 1) {
+        return [{ label: "Negocios", href: "/negocios", isCurrentPage: true }]
+      }
+      return [
+        { label: "Negocios", href: "/negocios", isCurrentPage: false },
+        { label: "Editar ficha", href: pathname, isCurrentPage: true },
+      ]
+    }
+
+    if (segments[0] === "aprobacion") {
+      return [{ label: "Aprobación", href: "/aprobacion", isCurrentPage: true }]
+    }
+
     if (segments[0] === "users") {
       if (segments.length === 1) {
         return [{ label: "Users", href: "/users", isCurrentPage: true }]

@@ -6,6 +6,7 @@ import { api } from "@packages/backend/convex/_generated/api";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PhotoManager } from "@/components/app/entrepreneur/photo-manager";
+import { horarioSummary } from "@/lib/horario-format";
 
 type Commerce = NonNullable<
   FunctionReturnType<typeof api.table.commerces.myCommerce>
@@ -25,22 +26,6 @@ const ESTADO_VARIANTS: Record<
   publicado: "default",
   suspendido: "outline",
 };
-
-function formatMinutes(minutes: number): string {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return `${h}:${String(m).padStart(2, "0")}`;
-}
-
-function horarioSummary(horario: Commerce["horario"]): string {
-  if (!horario) return "Sin definir";
-  if (horario.mode === "disponible") {
-    return `Disponible · ${horario.label}`;
-  }
-  return `${horario.days} · ${formatMinutes(horario.from)}–${formatMinutes(
-    horario.to,
-  )}`;
-}
 
 function Row({ label, value }: { label: string; value?: string }) {
   if (!value) return null;

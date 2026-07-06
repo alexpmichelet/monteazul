@@ -7,7 +7,9 @@ import { useQuery } from "convex/react";
 import { api } from "@packages/backend/convex/_generated/api";
 import { useAuthActions } from "@convex-dev/auth/react";
 import {
+  IconBuildingStore,
   IconChevronRight,
+  IconClipboardCheck,
   IconDotsVertical,
   IconInnerShadowTop,
   IconLogout,
@@ -68,6 +70,14 @@ type NavGroup = {
 // --- Navigation data ---
 
 const navGroups: NavGroup[] = [
+  {
+    title: "Directorio",
+    defaultOpen: true,
+    items: [
+      { label: "Negocios", icon: IconBuildingStore, href: "/negocios" },
+      { label: "Aprobación", icon: IconClipboardCheck, href: "/aprobacion" },
+    ],
+  },
   {
     title: "General",
     defaultOpen: true,
