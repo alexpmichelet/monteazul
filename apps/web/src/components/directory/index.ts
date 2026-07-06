@@ -10,6 +10,7 @@ export {
   type StatusBadgeProps,
 } from "./status-badge";
 export { SubcategoryPill } from "./subcategory-pill";
+export { useRecordVisit } from "./use-record-visit";
 export {
   useWhatsAppContact,
   type WhatsAppContactTarget,
