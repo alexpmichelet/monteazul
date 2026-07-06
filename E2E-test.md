@@ -42,3 +42,9 @@ Format par entrée :
 - [ ] **Navigation liste → détail → retour** : depuis l'accueil, cliquer une carte d'un commerce publié → la fiche `/negocio/<id>` s'affiche (carrousel, badge, horaire, contact) → le bouton retour flottant ramène à la liste.
 - [ ] **Fiche non publiée par URL directe → non trouvé** : ouvrir directement l'URL d'une fiche `pendiente` ou `suspendido` → page « Negocio no encontrado » avec lien « Volver al directorio » (jamais le contenu de la fiche).
 - [ ] **Contact & réseaux** : sur une fiche publiée, le téléphone s'affiche « +57 318 217 3887 », le lien Instagram ouvre le profil, et « Escribir por WhatsApp » ouvre `wa.me/57…` avec le message pré-rempli.
+
+## #7 — Contact WhatsApp tracké (journal d'événements)
+
+- [ ] **Clic depuis une carte** — Précondition : annuaire avec un commerce publié « X » (WhatsApp 3182173887). Action : cliquer le bouton WhatsApp d'une carte. Résultat observable : toast « Redirigiendo a WhatsApp de X… », nouvel onglet vers `https://wa.me/573182173887?text=Hola%2C%20te%20escribo%20desde%20el%20directorio%20de%20Monteazul`, et un événement `whatsapp_click` pour X apparaît dans la table `events` (dashboard Convex). La carte ne navigue PAS vers la fiche.
+- [ ] **N clics = N événements (non dédupliqué)** — Précondition : fiche détail de X. Action : cliquer « Escribir por WhatsApp » 3 fois. Résultat observable : 3 événements `whatsapp_click` distincts enregistrés pour X, et chaque clic redirige bien vers `wa.me`.
+- [ ] **Le contact prime sur la stat** — Précondition : backend indisponible (hors-ligne / mutation en échec). Action : cliquer un bouton WhatsApp (carte ou CTA). Résultat observable : la redirection vers `wa.me` se produit quand même, le toast s'affiche, aucune erreur remontée à l'utilisateur.
