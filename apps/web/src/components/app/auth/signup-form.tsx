@@ -9,11 +9,13 @@ import {
   FieldError,
   FieldGroup,
   FieldLabel,
-  FieldSeparator,
+  // FieldSeparator, // Google sign-in désactivé dans l'UI (voir plus bas)
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { PasswordInput } from "@/components/custom/password-input"
 import { useAuthActions } from "@convex-dev/auth/react"
+import { useConvex } from "convex/react"
+import { api } from "@packages/backend/convex/_generated/api"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Controller, useForm } from "react-hook-form"
 import { useRouter } from "next/navigation"
@@ -24,6 +26,7 @@ import * as z from "zod"
 
 const formSchema = z
   .object({
+    name: z.string().min(1, "El nombre es obligatorio"),
     email: z
       .string()
       .min(1, "El correo es obligatorio")
@@ -47,11 +50,13 @@ export function SignupForm({
 }: React.ComponentProps<"div">) {
   const router = useRouter()
   const { signIn } = useAuthActions()
+  const convex = useConvex()
   const [formError, setFormError] = React.useState<string | null>(null)
   const [isLoading, setIsLoading] = React.useState(false)
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      name: "",
       email: "",
       password: "",
       confirmPassword: "",
@@ -60,9 +65,19 @@ export function SignupForm({
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
     setFormError(null)
+    // Surface the common "email already used" case explicitly rather than a
+    // generic error once the sign-up call fails.
+    const existing = await convex.query(api.table.users.getUserByEmail, {
+      email: data.email,
+    })
+    if (existing) {
+      setFormError("Ya existe una cuenta con este correo. Inicia sesión.")
+      return
+    }
     setIsLoading(true)
     try {
       const { signingIn } = await signIn("password", {
+        name: data.name,
         email: data.email,
         password: data.password,
         flow: "signUp",
@@ -73,20 +88,28 @@ export function SignupForm({
         router.replace(`/verify-email?email=${encodeURIComponent(data.email)}`)
       }
     } catch (error) {
-      setFormError(getConvexErrorMessage(error))
+      setFormError(
+        getConvexErrorMessage(
+          error,
+          "No pudimos crear tu cuenta. Verifica los datos e inténtalo de nuevo.",
+        ),
+      )
     } finally {
       setIsLoading(false)
     }
   }
 
-  async function handleGoogleSignIn() {
-    setFormError(null)
-    try {
-      await signIn("google")
-    } catch (error) {
-      setFormError(getConvexErrorMessage(error))
-    }
-  }
+  // Google sign-in désactivé dans l'UI — on n'utilise que le provider
+  // email / mot de passe pour l'instant. Pour réactiver : décommenter cette
+  // fonction, le bloc « O continúa con » plus bas et l'import FieldSeparator.
+  // async function handleGoogleSignIn() {
+  //   setFormError(null)
+  //   try {
+  //     await signIn("google")
+  //   } catch (error) {
+  //     setFormError(getConvexErrorMessage(error))
+  //   }
+  // }
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -103,6 +126,25 @@ export function SignupForm({
               {formError && (
                 <div className="text-destructive self-center">{formError}</div>
               )}
+              <Controller
+                name="name"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="name">Nombre</FieldLabel>
+                    <Input
+                      {...field}
+                      id="name"
+                      aria-invalid={fieldState.invalid}
+                      placeholder="Tu nombre"
+                      required
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
               <Controller
                 name="email"
                 control={form.control}
@@ -182,6 +224,10 @@ export function SignupForm({
                   {isLoading ? <Spinner /> : "Crear cuenta"}
                 </Button>
               </Field>
+              {/* Google sign-in désactivé dans l'UI — on n'utilise que le
+                  provider email / mot de passe pour l'instant. Pour réactiver :
+                  décommenter ce bloc, la fonction handleGoogleSignIn et l'import
+                  FieldSeparator.
               <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
                 O continúa con
               </FieldSeparator>
@@ -204,6 +250,7 @@ export function SignupForm({
                   Continuar con Google
                 </Button>
               </Field>
+              */}
               <FieldDescription className="text-center">
                 ¿Ya tienes cuenta? <a href="/login">Iniciar sesión</a>
               </FieldDescription>

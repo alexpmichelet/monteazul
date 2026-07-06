@@ -64,7 +64,9 @@ export function AccesoForm({ className, ...props }: React.ComponentProps<"div">)
         router.replace(`/verificar?email=${encodeURIComponent(data.email)}`);
       }
     } catch (error) {
-      setFormError(getConvexErrorMessage(error));
+      setFormError(
+        getConvexErrorMessage(error, "Correo o contraseña incorrectos."),
+      );
       setIsLoading(false);
     }
   }

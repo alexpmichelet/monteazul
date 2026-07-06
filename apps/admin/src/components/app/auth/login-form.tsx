@@ -9,7 +9,7 @@ import {
   FieldError,
   FieldGroup,
   FieldLabel,
-  FieldSeparator,
+  // FieldSeparator, // Google sign-in disabled in the UI (see below)
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { PasswordInput } from "@/components/custom/password-input"
@@ -78,20 +78,27 @@ export function LoginForm({
         router.replace(`/verify-email?email=${data.email}`);
       }
     } catch (error) {
-      setFormError(getConvexErrorMessage(error));
+      // The account exists (checked above), so a failed password sign-in is a
+      // wrong password — show that explicitly instead of a generic error.
+      setFormError(
+        getConvexErrorMessage(error, "Incorrect email or password."),
+      );
     } finally {
       setIsLoading(false);
     }
   }
 
-  async function handleGoogleSignIn() {
-    setFormError(null);
-    try {
-      await signIn("google");
-    } catch (error) {
-      setFormError(getConvexErrorMessage(error));
-    }
-  }
+  // Google sign-in disabled in the UI — we only use the email/password
+  // provider for now. To re-enable: uncomment this function, the
+  // "Or continue with" block below and the FieldSeparator import.
+  // async function handleGoogleSignIn() {
+  //   setFormError(null);
+  //   try {
+  //     await signIn("google");
+  //   } catch (error) {
+  //     setFormError(getConvexErrorMessage(error));
+  //   }
+  // }
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0">
@@ -154,6 +161,10 @@ export function LoginForm({
                   {isLoading ? <Spinner /> : "Login"}
                 </Button>
               </Field>
+              {/* Google sign-in disabled in the UI — we only use the
+                  email/password provider for now. To re-enable: uncomment this
+                  block, the handleGoogleSignIn function and the FieldSeparator
+                  import.
               <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
                 Or continue with
               </FieldSeparator>
@@ -176,6 +187,7 @@ export function LoginForm({
                   Continue with Google
                 </Button>
               </Field>
+              */}
               <FieldDescription className="text-center">
                 Admin access only. Contact your administrator for access.
               </FieldDescription>

@@ -73,7 +73,12 @@ export function RegistroForm({ className, ...props }: React.ComponentProps<"div"
         router.replace(`/verificar?email=${encodeURIComponent(data.email)}`);
       }
     } catch (error) {
-      setFormError(getConvexErrorMessage(error));
+      setFormError(
+        getConvexErrorMessage(
+          error,
+          "No pudimos crear tu cuenta. Verifica los datos e inténtalo de nuevo.",
+        ),
+      );
       setIsLoading(false);
     }
   }

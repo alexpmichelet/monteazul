@@ -14,6 +14,20 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
     // password reset flows (both via Resend). The plaintext `crypto`
     // placeholder from the template is replaced by real Scrypt hashing.
     Password({
+      // Persist the display name provided at sign-up. The default Password
+      // `profile` only keeps the email, so without this the `name` field sent
+      // by the registration forms would be silently dropped. On sign-in (no
+      // name in params) the field is simply omitted, never overwritten.
+      profile(params) {
+        const name =
+          typeof params.name === "string" && params.name.trim().length > 0
+            ? params.name.trim()
+            : undefined;
+        return {
+          email: params.email as string,
+          ...(name ? { name } : {}),
+        };
+      },
       verify: ResendOTP,
       reset: ResendOTPPasswordReset,
       crypto: {

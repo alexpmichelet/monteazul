@@ -9,7 +9,7 @@ import {
   FieldError,
   FieldGroup,
   FieldLabel,
-  FieldSeparator,
+  // FieldSeparator, // Google sign-in désactivé dans l'UI (voir plus bas)
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/custom/password-input";
@@ -70,20 +70,27 @@ export function LoginForm({
         router.replace(`/verify-email?email=${encodeURIComponent(data.email)}`);
       }
     } catch (error) {
-      setFormError(getConvexErrorMessage(error));
+      // The account exists (checked above), so a failed password sign-in is a
+      // wrong password — show that explicitly instead of a generic error.
+      setFormError(
+        getConvexErrorMessage(error, "Correo o contraseña incorrectos."),
+      );
     } finally {
       setIsLoading(false);
     }
   }
 
-  async function handleGoogleSignIn() {
-    setFormError(null);
-    try {
-      await signIn("google");
-    } catch (error) {
-      setFormError(getConvexErrorMessage(error));
-    }
-  }
+  // Google sign-in désactivé dans l'UI — on n'utilise que le provider
+  // email / mot de passe pour l'instant. Pour réactiver : décommenter cette
+  // fonction, le bloc « O continúa con » plus bas et l'import FieldSeparator.
+  // async function handleGoogleSignIn() {
+  //   setFormError(null);
+  //   try {
+  //     await signIn("google");
+  //   } catch (error) {
+  //     setFormError(getConvexErrorMessage(error));
+  //   }
+  // }
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0">
@@ -154,6 +161,10 @@ export function LoginForm({
                   {isLoading ? <Spinner /> : "Iniciar sesión"}
                 </Button>
               </Field>
+              {/* Google sign-in désactivé dans l'UI — on n'utilise que le
+                  provider email / mot de passe pour l'instant. Pour réactiver :
+                  décommenter ce bloc, la fonction handleGoogleSignIn et l'import
+                  FieldSeparator.
               <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
                 O continúa con
               </FieldSeparator>
@@ -176,6 +187,7 @@ export function LoginForm({
                   Continuar con Google
                 </Button>
               </Field>
+              */}
               <FieldDescription className="text-center">
                 ¿No tienes cuenta? <a href="/signup">Crear cuenta</a>
               </FieldDescription>
