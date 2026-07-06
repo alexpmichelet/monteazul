@@ -48,3 +48,9 @@ Format par entrée :
 - [ ] **Clic depuis une carte** — Précondition : annuaire avec un commerce publié « X » (WhatsApp 3182173887). Action : cliquer le bouton WhatsApp d'une carte. Résultat observable : toast « Redirigiendo a WhatsApp de X… », nouvel onglet vers `https://wa.me/573182173887?text=Hola%2C%20te%20escribo%20desde%20el%20directorio%20de%20Monteazul`, et un événement `whatsapp_click` pour X apparaît dans la table `events` (dashboard Convex). La carte ne navigue PAS vers la fiche.
 - [ ] **N clics = N événements (non dédupliqué)** — Précondition : fiche détail de X. Action : cliquer « Escribir por WhatsApp » 3 fois. Résultat observable : 3 événements `whatsapp_click` distincts enregistrés pour X, et chaque clic redirige bien vers `wa.me`.
 - [ ] **Le contact prime sur la stat** — Précondition : backend indisponible (hors-ligne / mutation en échec). Action : cliquer un bouton WhatsApp (carte ou CTA). Résultat observable : la redirection vers `wa.me` se produit quand même, le toast s'affiche, aucune erreur remontée à l'utilisateur.
+
+## #8 — Tracking des visites (visiteur unique / fiche / jour)
+
+- [ ] **Dédup même visiteur / même jour** : ouvrir une fiche `publicado` en navigation privée (nouveau visiteur), la recharger 3× → dans les stats du commerce, **1 seule Visite** pour aujourd'hui.
+- [ ] **Exclusion du propriétaire** : se connecter comme l'Entrepreneur propriétaire, ouvrir SA fiche → **aucune Visite** ajoutée ; ouvrir la fiche d'un AUTRE commerce → **+1 Visite** sur cette autre fiche.
+- [ ] **Bascule de jour (America/Bogota)** : ouvrir une fiche le jour J, puis le lendemain (après minuit heure Colombie) avec le même appareil/visiteur → **2 Visites** distinctes (J et J+1).
