@@ -78,3 +78,9 @@ Format par entrée :
 - [ ] **Approbation publie la fiche** : connecté en `admin`, ouvrir `/aprobacion` → la fiche `pendiente` apparaît avec ses champs internes (`¿Resides?`, `Notas`). Cliquer « Aprobar » → toast de succès, la fiche quitte la file ; sur l'annuaire public (`apps/web`) elle est désormais visible.
 - [ ] **Suspension puis réactivation** : sur `/negocios`, filtrer par estado « Publicado », « Suspender » une fiche → elle passe `suspendido` et disparaît de l'annuaire public ; « Reactivar » → elle repasse `publicado` et réapparaît, sans re-passer par la file d'approbation.
 - [ ] **Édition + suppression définitive** : ouvrir `/negocios/[id]`, modifier un champ avec un WhatsApp invalide → erreur inline (même validation que le formulaire entrepreneur) ; corriger et enregistrer → l'estado reste inchangé. « Eliminar » → dialog de confirmation, puis retrait définitif et retour à `/negocios`.
+
+## #13 — Édition et suspension de sa fiche par l'entrepreneur
+
+- [ ] **Édition sans repasser en approbation** : connecté comme entrepreneur d'une fiche `publicado`, dans « Mi negocio » modifier le nom et enregistrer → toast « Cambios guardados », l'estado reste « Publicado », et le nouveau nom apparaît aussitôt sur l'annuaire public.
+- [ ] **Suspension / réactivation** : sur une fiche `publicado`, cliquer « Suspender mi publicación » → l'état passe à « Suspendido » et la fiche disparaît de l'annuaire public ; cliquer « Reactivar mi publicación » → elle repasse « Publicado » et réapparaît, sans intervention admin.
+- [ ] **Garde propriétaire** : connecté comme un autre entrepreneur, tenter d'éditer/suspendre la fiche d'autrui (via son id) → refus, la fiche reste inchangée.
