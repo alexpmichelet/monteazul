@@ -54,3 +54,9 @@ Format par entrée :
 - [ ] **Dédup même visiteur / même jour** : ouvrir une fiche `publicado` en navigation privée (nouveau visiteur), la recharger 3× → dans les stats du commerce, **1 seule Visite** pour aujourd'hui.
 - [ ] **Exclusion du propriétaire** : se connecter comme l'Entrepreneur propriétaire, ouvrir SA fiche → **aucune Visite** ajoutée ; ouvrir la fiche d'un AUTRE commerce → **+1 Visite** sur cette autre fiche.
 - [ ] **Bascule de jour (America/Bogota)** : ouvrir une fiche le jour J, puis le lendemain (après minuit heure Colombie) avec le même appareil/visiteur → **2 Visites** distinctes (J et J+1).
+
+## #9 — Auth user et favoris sur l'annuaire public
+
+- [ ] **Anonyme → invitation** : sans session, toucher le cœur d'une carte OU de la fiche → le dialog « Guarda tus negocios favoritos » s'ouvre, aucun favori créé ; ouvrir « Mis guardados » propose de se connecter.
+- [ ] **Parcours complet** : Crear cuenta (email/mot de passe) → vérification → connecté, retour à l'accueil → cœur plein depuis une carte ET depuis la fiche → « Mis guardados » liste les deux → Cerrar sesión → les cœurs redeviennent vides.
+- [ ] **Filtre `publicado`** : User ayant un favori dont la fiche passe en `suspendido` → la fiche disparaît de « Mis guardados » sans erreur ; toggler deux fois le même cœur ne crée jamais de doublon (paire user+commerce unique).
