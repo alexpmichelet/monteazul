@@ -60,7 +60,7 @@ type AdminData = {
   name?: string;
   email?: string;
   image?: string;
-  role?: "user" | "admin";
+  role?: "user" | "entreprise" | "admin";
   emailVerificationTime?: number;
 };
 

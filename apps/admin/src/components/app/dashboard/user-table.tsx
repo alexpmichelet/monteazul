@@ -79,7 +79,7 @@ type UserData = {
   name?: string;
   email?: string;
   image?: string;
-  role?: "user" | "admin";
+  role?: "user" | "entreprise" | "admin";
   emailVerificationTime?: number;
   banned?: boolean;
   banExpires?: number;
@@ -172,7 +172,7 @@ export function UserTable({ basePath = "/team", roleFilter }: UserTableProps) {
     }
   };
 
-  const handleToggleRole = async (userId: Id<"users">, currentRole: "user" | "admin" | undefined) => {
+  const handleToggleRole = async (userId: Id<"users">, currentRole: "user" | "entreprise" | "admin" | undefined) => {
     const newRole = currentRole === "admin" ? "user" : "admin";
     try {
       await updateUser({ userId, updates: { role: newRole } });
