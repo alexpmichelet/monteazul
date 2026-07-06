@@ -1,2 +1,8 @@
 .env.local
 .env
+
+# Notion import — generated seeded-account passwords for manual WhatsApp
+# hand-off. NEVER commit: these are live credentials (see notionImport.ts /
+# docs/product/notion-import.md).
+import-credentials*.json
+import-credentials*.csv

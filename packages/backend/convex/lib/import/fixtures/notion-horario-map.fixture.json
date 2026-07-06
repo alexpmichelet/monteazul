@@ -1,0 +1,22 @@
+[
+  {
+    "raw": "Lunes a viernes de 8:00 a 16:00",
+    "horario": { "mode": "plages", "days": "Lun – Vie", "from": 480, "to": 960 }
+  },
+  {
+    "raw": "Todos los días de 6:00 a 20:00",
+    "horario": { "mode": "plages", "days": "Lun – Dom", "from": 360, "to": 1200 }
+  },
+  {
+    "raw": "Bajo pedido",
+    "horario": { "mode": "disponible", "label": "sobre pedido" }
+  },
+  {
+    "raw": "Martes a sábado de 9:00 a 18:00",
+    "horario": { "mode": "plages", "days": "Mar – Sáb", "from": 540, "to": 1080 }
+  },
+  {
+    "raw": "Con cita previa",
+    "horario": { "mode": "disponible", "label": "con cita previa" }
+  }
+]

@@ -142,7 +142,10 @@ export type CommerceFormInput = {
   subcategories?: string[];
   description: string;
   whatsapp: string;
-  horario: Horario;
+  // Optional: the schema stores `horario` as optional. The entrepreneur form
+  // always provides one (its Convex arg is required), but the Notion import may
+  // leave it unset when the free-text value is not in the correspondence table.
+  horario?: Horario;
   torreApto?: string;
   instagram?: string;
   contactName?: string;
