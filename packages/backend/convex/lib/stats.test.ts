@@ -1,5 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { aggregateEvents, bogotaBucketKey } from "./stats";
+import {
+  aggregateEvents,
+  aggregateGlobalStats,
+  bogotaBucketKey,
+  type GlobalAggregatableEvent,
+} from "./stats";
 
 /**
  * The statistics aggregation module (ADR-0001): totals and day/week/month time
@@ -121,6 +126,148 @@ describe("aggregateEvents", () => {
     expect(series).toEqual([
       { bucket: "2026-07", visits: 1, whatsappContacts: 0 },
       { bucket: "2026-08", visits: 0, whatsappContacts: 1 },
+    ]);
+  });
+});
+
+/**
+ * The Super admin's site-wide aggregation (story #15). Built on the SAME
+ * `aggregateEvents` module as the per-commerce Estadísticas (#14), so the global
+ * totals are provably the sum of the per-commerce totals, and the evolution
+ * series is the sum of the per-commerce series (aggregating all Événements at
+ * once IS that per-bucket sum). Adds two admin-only views the entrepreneur page
+ * has no need for: the count of Commerces per Estado and the WhatsApp-contacts
+ * leaderboard (the monetisation pitch).
+ */
+describe("aggregateGlobalStats", () => {
+  const A = "commerce_a";
+  const B = "commerce_b";
+  const C = "commerce_c";
+
+  const commerces = [
+    { commerceId: A, name: "Aromas", estado: "publicado" as const },
+    { commerceId: B, name: "Bazar", estado: "publicado" as const },
+    { commerceId: C, name: "Cafetería", estado: "suspendido" as const },
+  ];
+
+  function visit(commerceId: string): GlobalAggregatableEvent {
+    return { type: "visit", commerceId, timestamp: JUL6_11H };
+  }
+  function contact(commerceId: string): GlobalAggregatableEvent {
+    return { type: "whatsapp_click", commerceId, timestamp: JUL6_11H };
+  }
+
+  test("empty input → zero totals, empty series and leaderboard, all-zero estado breakdown", () => {
+    const stats = aggregateGlobalStats([], [], "day");
+    expect(stats.totals).toEqual({ visits: 0, whatsappContacts: 0 });
+    expect(stats.series).toEqual([]);
+    expect(stats.ranking).toEqual([]);
+    expect(stats.estadoBreakdown).toEqual([
+      { estado: "pendiente", count: 0 },
+      { estado: "publicado", count: 0 },
+      { estado: "suspendido", count: 0 },
+    ]);
+  });
+
+  test("site-wide totals count every Commerce's Visites and Contactos por WhatsApp", () => {
+    const stats = aggregateGlobalStats(
+      commerces,
+      [visit(A), visit(A), contact(A), visit(B), contact(B), contact(B)],
+      "day",
+    );
+    expect(stats.totals).toEqual({ visits: 3, whatsappContacts: 3 });
+  });
+
+  test("global totals equal the sum of the per-commerce aggregations (consistency with #14)", () => {
+    const events = [
+      visit(A),
+      contact(A),
+      contact(A),
+      visit(B),
+      visit(B),
+      contact(C),
+    ];
+    const global = aggregateGlobalStats(commerces, events, "day");
+
+    // Re-derive per-commerce with the very module the entrepreneur page uses.
+    const sum = { visits: 0, whatsappContacts: 0 };
+    for (const c of commerces) {
+      const perCommerce = aggregateEvents(
+        events
+          .filter((e) => e.commerceId === c.commerceId)
+          .map((e) => ({ type: e.type, timestamp: e.timestamp })),
+        "day",
+      );
+      sum.visits += perCommerce.totals.visits;
+      sum.whatsappContacts += perCommerce.totals.whatsappContacts;
+    }
+    expect(global.totals).toEqual(sum);
+  });
+
+  test("ranking orders Commerces by WhatsApp contacts desc, keeping zero-contact fiches last", () => {
+    const stats = aggregateGlobalStats(
+      commerces,
+      [
+        contact(B),
+        contact(B),
+        contact(B), // Bazar: 3
+        contact(A), // Aromas: 1
+        // Cafetería: 0
+      ],
+      "day",
+    );
+    expect(stats.ranking).toEqual([
+      { commerceId: B, name: "Bazar", whatsappContacts: 3 },
+      { commerceId: A, name: "Aromas", whatsappContacts: 1 },
+      { commerceId: C, name: "Cafetería", whatsappContacts: 0 },
+    ]);
+  });
+
+  test("ranking breaks ties by name (ascending), deterministically", () => {
+    const stats = aggregateGlobalStats(
+      commerces,
+      [contact(A), contact(B), contact(C)], // all tied at 1
+      "day",
+    );
+    expect(stats.ranking.map((r) => r.name)).toEqual([
+      "Aromas",
+      "Bazar",
+      "Cafetería",
+    ]);
+  });
+
+  test("estado breakdown counts Commerces per Estado exactly, in the canonical order", () => {
+    const stats = aggregateGlobalStats(
+      [
+        { commerceId: "1", name: "Uno", estado: "pendiente" },
+        { commerceId: "2", name: "Dos", estado: "publicado" },
+        { commerceId: "3", name: "Tres", estado: "publicado" },
+        { commerceId: "4", name: "Cuatro", estado: "suspendido" },
+        { commerceId: "5", name: "Cinco", estado: "publicado" },
+      ],
+      [],
+      "day",
+    );
+    expect(stats.estadoBreakdown).toEqual([
+      { estado: "pendiente", count: 1 },
+      { estado: "publicado", count: 3 },
+      { estado: "suspendido", count: 1 },
+    ]);
+  });
+
+  test("global series is the per-bucket sum across Commerces, sorted ascending", () => {
+    const stats = aggregateGlobalStats(
+      commerces,
+      [
+        { type: "visit", commerceId: A, timestamp: JUL5_2330 }, // 2026-07-05
+        { type: "visit", commerceId: B, timestamp: JUL6_0000 }, // 2026-07-06
+        { type: "whatsapp_click", commerceId: A, timestamp: JUL6_11H }, // 2026-07-06
+      ],
+      "day",
+    );
+    expect(stats.series).toEqual([
+      { bucket: "2026-07-05", visits: 1, whatsappContacts: 0 },
+      { bucket: "2026-07-06", visits: 1, whatsappContacts: 1 },
     ]);
   });
 });

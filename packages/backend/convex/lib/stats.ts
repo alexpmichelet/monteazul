@@ -13,6 +13,7 @@
  * clock exactly, which lets the week/month math stay simple and deterministic.
  */
 
+import { ESTADOS, type Estado } from "./commerce";
 import { bogotaDayKey } from "./tracking";
 
 /** Bucketing granularity backing the Estadísticas period selector. */
@@ -120,4 +121,114 @@ export function aggregateEvents(
   );
 
   return { totals, series };
+}
+
+// ===========================================================================
+// Site-wide aggregation for the Super admin dashboard (story #15).
+//
+// Built on the SAME `aggregateEvents` primitive as the per-commerce
+// Estadísticas (#14): the global totals and evolution series are the aggregation
+// over EVERY Commerce's Événements, which is by construction the sum of the
+// per-commerce totals and the per-bucket sum of the per-commerce series. Two
+// admin-only views are added on top — the count of Commerces per Estado and the
+// WhatsApp-contacts leaderboard (the monetisation pitch).
+//
+// Like the entrepreneur page, the period selector (day/week/month) only
+// re-buckets the evolution series; the totals and the ranking are over the whole
+// tracked journal (a leaderboard is a scalar per Commerce, not a series).
+// ===========================================================================
+
+/** The fields the global aggregation reads from a Commerce. */
+export type CommerceForStats = {
+  commerceId: string;
+  name: string;
+  estado: Estado;
+};
+
+/** An Événement tagged with the Commerce it belongs to. */
+export type GlobalAggregatableEvent = AggregatableEvent & {
+  commerceId: string;
+};
+
+/** One Commerce's line of the WhatsApp-contacts leaderboard. */
+export type CommerceContactRank = {
+  commerceId: string;
+  name: string;
+  whatsappContacts: number;
+};
+
+/** Count of Commerces in a given Estado. */
+export type EstadoCount = {
+  estado: Estado;
+  count: number;
+};
+
+/** Everything the Super admin dashboard renders, aggregated AT READ. */
+export type GlobalStats = {
+  totals: { visits: number; whatsappContacts: number };
+  series: StatsBucket[];
+  estadoBreakdown: EstadoCount[];
+  ranking: CommerceContactRank[];
+};
+
+/**
+ * Aggregate the whole product's Événements + Commerces into the Super admin
+ * dashboard's numbers, bucketed by `granularity` in America/Bogota:
+ *
+ * - `totals` / `series` — the site-wide aggregation over every Événement (the
+ *   sum of the per-commerce Estadísticas of #14, by construction);
+ * - `estadoBreakdown` — the count of Commerces per Estado, in the canonical
+ *   Estado order, including the zero-count ones;
+ * - `ranking` — every Commerce ranked by its WhatsApp contacts (descending),
+ *   ties broken by name then id so the order is deterministic; zero-contact
+ *   fiches are kept, last.
+ */
+export function aggregateGlobalStats(
+  commerces: CommerceForStats[],
+  events: GlobalAggregatableEvent[],
+  granularity: StatsGranularity,
+): GlobalStats {
+  // Totals + evolution series over every Commerce at once. Aggregating all
+  // Événements together yields the same numbers as summing the per-commerce
+  // aggregations bucket by bucket — that IS the consistency guarantee.
+  const global = aggregateEvents(events, granularity);
+
+  // Per-commerce WhatsApp-contact tallies for the leaderboard.
+  const contactsByCommerce = new Map<string, number>();
+  for (const commerce of commerces) {
+    contactsByCommerce.set(commerce.commerceId, 0);
+  }
+  for (const event of events) {
+    if (event.type !== "whatsapp_click") continue;
+    const current = contactsByCommerce.get(event.commerceId);
+    // Only rank Commerces we know about (orphan Événements of a removed fiche
+    // still count in the site-wide totals, but cannot be ranked).
+    if (current === undefined) continue;
+    contactsByCommerce.set(event.commerceId, current + 1);
+  }
+
+  const ranking: CommerceContactRank[] = commerces
+    .map((commerce) => ({
+      commerceId: commerce.commerceId,
+      name: commerce.name,
+      whatsappContacts: contactsByCommerce.get(commerce.commerceId) ?? 0,
+    }))
+    .sort(
+      (a, b) =>
+        b.whatsappContacts - a.whatsappContacts ||
+        (a.name < b.name ? -1 : a.name > b.name ? 1 : 0) ||
+        (a.commerceId < b.commerceId ? -1 : a.commerceId > b.commerceId ? 1 : 0),
+    );
+
+  const estadoBreakdown: EstadoCount[] = ESTADOS.map((estado) => ({
+    estado,
+    count: commerces.filter((commerce) => commerce.estado === estado).length,
+  }));
+
+  return {
+    totals: global.totals,
+    series: global.series,
+    estadoBreakdown,
+    ranking,
+  };
 }
