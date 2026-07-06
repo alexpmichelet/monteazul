@@ -268,6 +268,74 @@ describe("searchPublic", () => {
   });
 });
 
+describe("getPublicById", () => {
+  test("returns the public detail of a publicado fiche", async () => {
+    const t = convexTest(schema, modules);
+    const owner = await makeOwner(t, "owner@example.com");
+    const id = await insertCommerce(t, owner, {
+      name: "Sazón de la Abuela",
+      category: "Comida y bebida",
+      subcategories: ["Almuerzos y comida típica"],
+      estado: "publicado",
+    });
+
+    const commerce = await t.query(api.table.commerces.getPublicById, { id });
+    expect(commerce?.name).toBe("Sazón de la Abuela");
+    expect(commerce?.category).toBe("Comida y bebida");
+    expect(commerce?.subcategories).toEqual(["Almuerzos y comida típica"]);
+  });
+
+  test("never exposes internal fields (resides, notas, ownerId, estado)", async () => {
+    const t = convexTest(schema, modules);
+    const owner = await makeOwner(t, "owner@example.com");
+    const id = await insertCommerce(t, owner, {
+      name: "Con datos internos",
+      category: "Mascotas",
+      estado: "publicado",
+    });
+
+    const commerce = (await t.query(api.table.commerces.getPublicById, {
+      id,
+    })) as Record<string, unknown> | null;
+    expect(commerce).not.toBeNull();
+    expect(commerce?.resides).toBeUndefined();
+    expect(commerce?.notas).toBeUndefined();
+    expect(commerce?.ownerId).toBeUndefined();
+    expect(commerce?.estado).toBeUndefined();
+  });
+
+  test("returns null for a pendiente fiche (not reachable by direct URL)", async () => {
+    const t = convexTest(schema, modules);
+    const owner = await makeOwner(t, "owner@example.com");
+    const id = await insertCommerce(t, owner, {
+      name: "Pendiente",
+      category: "Tecnología",
+      estado: "pendiente",
+    });
+    expect(await t.query(api.table.commerces.getPublicById, { id })).toBeNull();
+  });
+
+  test("returns null for a suspendido fiche", async () => {
+    const t = convexTest(schema, modules);
+    const owner = await makeOwner(t, "owner@example.com");
+    const id = await insertCommerce(t, owner, {
+      name: "Suspendido",
+      category: "Tecnología",
+      estado: "suspendido",
+    });
+    expect(await t.query(api.table.commerces.getPublicById, { id })).toBeNull();
+  });
+
+  test("returns null for an unknown or malformed id", async () => {
+    const t = convexTest(schema, modules);
+    expect(
+      await t.query(api.table.commerces.getPublicById, {
+        id: "not-a-real-id",
+      }),
+    ).toBeNull();
+  });
+});
+
 describe("commerces schema", () => {
   test("accepts every canonical category value", async () => {
     const t = convexTest(schema, modules);
