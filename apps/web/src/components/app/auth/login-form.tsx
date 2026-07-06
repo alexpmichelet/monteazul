@@ -27,9 +27,9 @@ import { Spinner } from "@/components/ui/spinner";
 const formSchema = z.object({
   email: z
     .string()
-    .min(1, "Email is required")
-    .email("Please enter a valid email address"),
-  password: z.string().min(1, "Password is required"),
+    .min(1, "El correo es obligatorio")
+    .email("Ingresa un correo válido"),
+  password: z.string().min(1, "La contraseña es obligatoria"),
 });
 
 export function LoginForm({
@@ -54,7 +54,7 @@ export function LoginForm({
       email: data.email,
     });
     if (!user) {
-      setFormError("No account found with this email");
+      setFormError("No encontramos una cuenta con este correo");
       return;
     }
     setIsLoading(true);
@@ -64,8 +64,10 @@ export function LoginForm({
         password: data.password,
         flow: "signIn",
       });
-      if (!signingIn) {
-        router.replace(`/verify-email?email=${data.email}`);
+      if (signingIn) {
+        router.replace("/");
+      } else {
+        router.replace(`/verify-email?email=${encodeURIComponent(data.email)}`);
       }
     } catch (error) {
       setFormError(getConvexErrorMessage(error));
@@ -85,7 +87,7 @@ export function LoginForm({
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0">
-        <CardContent className="grid p-0 md:grid-cols-2">
+        <CardContent className="p-0">
           <form
             className="p-6 md:p-8"
             id="form-login"
@@ -93,9 +95,9 @@ export function LoginForm({
           >
             <FieldGroup>
               <div className="flex flex-col items-center gap-2 text-center">
-                <h1 className="text-2xl font-bold">Welcome back</h1>
+                <h1 className="text-2xl font-bold">Bienvenido de nuevo</h1>
                 <p className="text-muted-foreground text-balance">
-                  Login to your Acme Inc account
+                  Inicia sesión en tu cuenta de Monteazul
                 </p>
               </div>
               {formError && (
@@ -106,13 +108,13 @@ export function LoginForm({
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="email">Email</FieldLabel>
+                    <FieldLabel htmlFor="email">Correo</FieldLabel>
                     <Input
                       {...field}
                       id="email"
                       aria-invalid={fieldState.invalid}
                       type="email"
-                      placeholder="m@example.com"
+                      placeholder="tucorreo@ejemplo.com"
                       required
                     />
                     {fieldState.invalid && (
@@ -127,12 +129,12 @@ export function LoginForm({
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <div className="flex items-center">
-                      <FieldLabel htmlFor="password">Password</FieldLabel>
+                      <FieldLabel htmlFor="password">Contraseña</FieldLabel>
                       <a
                         href="/forgot-password"
                         className="ml-auto text-sm underline-offset-2 hover:underline"
                       >
-                        Forgot your password?
+                        ¿Olvidaste tu contraseña?
                       </a>
                     </div>
                     <PasswordInput
@@ -149,11 +151,11 @@ export function LoginForm({
               />
               <Field>
                 <Button type="submit" form="form-login" disabled={isLoading}>
-                  {isLoading ? <Spinner /> : "Login"}
+                  {isLoading ? <Spinner /> : "Iniciar sesión"}
                 </Button>
               </Field>
               <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
-                Or continue with
+                O continúa con
               </FieldSeparator>
               <Field>
                 <Button
@@ -171,26 +173,19 @@ export function LoginForm({
                       fill="currentColor"
                     />
                   </svg>
-                  Continue with Google
+                  Continuar con Google
                 </Button>
               </Field>
               <FieldDescription className="text-center">
-                Don&apos;t have an account? <a href="/signup">Sign up</a>
+                ¿No tienes cuenta? <a href="/signup">Crear cuenta</a>
               </FieldDescription>
             </FieldGroup>
           </form>
-          <div className="bg-muted relative hidden md:block">
-            <img
-              src="/placeholder.svg"
-              alt="Image"
-              className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-            />
-          </div>
         </CardContent>
       </Card>
       <FieldDescription className="px-6 text-center">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-        and <a href="#">Privacy Policy</a>.
+        Al continuar, aceptas nuestros <a href="#">Términos de servicio</a> y
+        nuestra <a href="#">Política de privacidad</a>.
       </FieldDescription>
     </div>
   );

@@ -54,8 +54,12 @@ export const commerces = defineTable(documentSchema)
     filterFields: ["estado", "category"],
   });
 
-/** Public projection of a Commerce — strips every internal, admin-only field. */
-async function toPublicCommerce(ctx: QueryCtx, doc: Doc<"commerces">) {
+/**
+ * Public projection of a Commerce — strips every internal, admin-only field.
+ * Exported so other public surfaces (e.g. « Mis guardados » in `favorites`)
+ * expose the exact same internal-fields-stripped shape.
+ */
+export async function toPublicCommerce(ctx: QueryCtx, doc: Doc<"commerces">) {
   const photos = (
     await Promise.all(doc.photos.map((id) => ctx.storage.getUrl(id)))
   ).filter((url): url is string => url !== null);

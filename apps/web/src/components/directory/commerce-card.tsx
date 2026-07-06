@@ -2,13 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Clock, Heart } from "lucide-react";
+import { Clock } from "lucide-react";
 import type { FunctionReturnType } from "convex/server";
 import { api } from "@packages/backend/convex/_generated/api";
 import { commerceStatus } from "@packages/backend/convex/lib/horario";
 
 import { PHOTO_PLACEHOLDER_GRADIENT } from "@/lib/commerce-media";
 import { whatsAppLink } from "@/lib/commerce-contact";
+import { FavoriteHeart } from "./favorite-heart";
 import { StatusBadge } from "./status-badge";
 import { useWhatsAppContact } from "./use-whatsapp-contact";
 import { WhatsAppButton } from "./whatsapp-button";
@@ -25,7 +26,8 @@ export type DirectoryCommerce = DirectorySection["commerces"][number];
  * horario status line, and a WhatsApp CTA. The whole card links to the public
  * detail page (`/negocio/<id>`). The WhatsApp button records a Contact WhatsApp
  * (fire-and-forget) and opens `wa.me` without navigating the card; the
- * favourite heart is still an inert placeholder wired in a later slice.
+ * favourite heart toggles the real Favori (or invites an anonymous Visiteur to
+ * sign in) without navigating either.
  */
 function CommerceCard({
   commerce,
@@ -72,15 +74,11 @@ function CommerceCard({
           />
         ) : null}
 
-        <button
-          type="button"
-          aria-label="Guardar en favoritos"
-          data-slot="favorite-button"
-          onClick={(event) => event.preventDefault()}
-          className="absolute right-2 top-2 flex size-[30px] items-center justify-center rounded-full bg-white/95 text-ink-soft"
-        >
-          <Heart className="size-4" strokeWidth={2} />
-        </button>
+        <FavoriteHeart
+          commerceId={commerce._id}
+          variant="card"
+          className="absolute right-2 top-2"
+        />
       </div>
 
       <div className="px-0.5 pt-2.5">

@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Clock, Heart, Instagram, MapPin, Phone, Store } from "lucide-react";
+import { ChevronLeft, Clock, Instagram, MapPin, Phone, Store } from "lucide-react";
 import { useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { api } from "@packages/backend/convex/_generated/api";
@@ -17,6 +17,7 @@ import {
   instagramLink,
   whatsAppLink,
 } from "@/lib/commerce-contact";
+import { FavoriteHeart } from "./favorite-heart";
 import { PhotoCarousel } from "./photo-carousel";
 import { StatusBadge } from "./status-badge";
 import { SubcategoryPill } from "./subcategory-pill";
@@ -110,15 +111,11 @@ function DetailContent({
           <ChevronLeft className="size-5" strokeWidth={2.4} />
         </button>
 
-        {/* Favourite heart — visual placeholder, wired to favourites in a later slice. */}
-        <button
-          type="button"
-          aria-label="Guardar en favoritos"
-          data-slot="favorite-button"
-          className="absolute right-4 top-4 flex size-[38px] items-center justify-center rounded-full bg-white/95 text-ink-soft shadow-[0_2px_8px_rgba(20,30,50,0.18)]"
-        >
-          <Heart className="size-[19px]" strokeWidth={2} />
-        </button>
+        <FavoriteHeart
+          commerceId={commerce._id}
+          variant="detail"
+          className="absolute right-4 top-4 shadow-[0_2px_8px_rgba(20,30,50,0.18)]"
+        />
       </div>
 
       <div className="px-5 pt-5">

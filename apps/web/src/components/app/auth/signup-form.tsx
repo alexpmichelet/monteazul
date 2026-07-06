@@ -26,18 +26,18 @@ const formSchema = z
   .object({
     email: z
       .string()
-      .min(1, "Email is required")
-      .email("Please enter a valid email address"),
+      .min(1, "El correo es obligatorio")
+      .email("Ingresa un correo válido"),
     password: z
       .string()
-      .min(1, "Password is required")
-      .min(8, "Password must be at least 8 characters long"),
+      .min(1, "La contraseña es obligatoria")
+      .min(8, "La contraseña debe tener al menos 8 caracteres"),
     confirmPassword: z
       .string()
-      .min(1, "Confirm password is required"),
+      .min(1, "Confirma tu contraseña"),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
+    message: "Las contraseñas no coinciden",
     path: ["confirmPassword"],
   })
 
@@ -67,7 +67,9 @@ export function SignupForm({
         password: data.password,
         flow: "signUp",
       })
-      if (!signingIn) {
+      if (signingIn) {
+        router.replace("/")
+      } else {
         router.replace(`/verify-email?email=${encodeURIComponent(data.email)}`)
       }
     } catch (error) {
@@ -89,13 +91,13 @@ export function SignupForm({
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0">
-        <CardContent className="grid p-0 md:grid-cols-2">
+        <CardContent className="p-0">
           <form className="p-6 md:p-8" id="form-signup" onSubmit={form.handleSubmit(onSubmit)}>
             <FieldGroup>
               <div className="flex flex-col items-center gap-2 text-center">
-                <h1 className="text-2xl font-bold">Create your account</h1>
+                <h1 className="text-2xl font-bold">Crea tu cuenta</h1>
                 <p className="text-muted-foreground text-sm text-balance">
-                  Enter your email below to create your account
+                  Regístrate para guardar tus negocios favoritos
                 </p>
               </div>
               {formError && (
@@ -106,19 +108,15 @@ export function SignupForm({
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="email">Email</FieldLabel>
+                    <FieldLabel htmlFor="email">Correo</FieldLabel>
                     <Input
                       {...field}
                       id="email"
                       aria-invalid={fieldState.invalid}
                       type="email"
-                      placeholder="m@example.com"
+                      placeholder="tucorreo@ejemplo.com"
                       required
                     />
-                    <FieldDescription>
-                      We&apos;ll use this to contact you. We will not share your
-                      email with anyone else.
-                    </FieldDescription>
                     {fieldState.invalid && (
                       <FieldError errors={[fieldState.error]} />
                     )}
@@ -132,7 +130,7 @@ export function SignupForm({
                     control={form.control}
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="password">Password</FieldLabel>
+                        <FieldLabel htmlFor="password">Contraseña</FieldLabel>
                         <PasswordInput
                           {...field}
                           id="password"
@@ -151,7 +149,7 @@ export function SignupForm({
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
                         <FieldLabel htmlFor="confirmPassword">
-                          Confirm Password
+                          Confirmar contraseña
                         </FieldLabel>
                         <PasswordInput
                           {...field}
@@ -167,16 +165,16 @@ export function SignupForm({
                   />
                 </Field>
                 <FieldDescription>
-                  Must be at least 8 characters long.
+                  Debe tener al menos 8 caracteres.
                 </FieldDescription>
               </Field>
               <Field>
                 <Button type="submit" form="form-signup" disabled={isLoading}>
-                  {isLoading ? <Spinner /> : "Create Account"}
+                  {isLoading ? <Spinner /> : "Crear cuenta"}
                 </Button>
               </Field>
               <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
-                Or continue with
+                O continúa con
               </FieldSeparator>
               <Field>
                 <Button
@@ -194,26 +192,19 @@ export function SignupForm({
                       fill="currentColor"
                     />
                   </svg>
-                  Continue with Google
+                  Continuar con Google
                 </Button>
               </Field>
               <FieldDescription className="text-center">
-                Already have an account? <a href="/login">Sign in</a>
+                ¿Ya tienes cuenta? <a href="/login">Iniciar sesión</a>
               </FieldDescription>
             </FieldGroup>
           </form>
-          <div className="bg-muted relative hidden md:block">
-            <img
-              src="/placeholder.svg"
-              alt="Image"
-              className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-            />
-          </div>
         </CardContent>
       </Card>
       <FieldDescription className="px-6 text-center">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-        and <a href="#">Privacy Policy</a>.
+        Al continuar, aceptas nuestros <a href="#">Términos de servicio</a> y
+        nuestra <a href="#">Política de privacidad</a>.
       </FieldDescription>
     </div>
   )

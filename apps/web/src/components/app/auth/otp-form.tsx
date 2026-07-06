@@ -37,7 +37,7 @@ export function OTPForm({ className, email, ...props }: OTPFormProps) {
     setFormError(null)
 
     if (value.length !== 6) {
-      setFormError("Please enter the complete 6-digit code")
+      setFormError("Ingresa el código completo de 6 dígitos")
       return
     }
 
@@ -48,7 +48,7 @@ export function OTPForm({ className, email, ...props }: OTPFormProps) {
         code: value,
         flow: "email-verification",
       })
-      // If successful, the auth provider will handle the redirect
+      router.replace("/")
     } catch (error) {
       setFormError(getConvexErrorMessage(error))
     } finally {
@@ -71,11 +71,11 @@ export function OTPForm({ className, email, ...props }: OTPFormProps) {
 
   return (
     <div
-      className={cn("flex flex-col gap-6 md:min-h-[450px]", className)}
+      className={cn("flex flex-col gap-6", className)}
       {...props}
     >
-      <Card className="flex-1 overflow-hidden p-0">
-        <CardContent className="grid flex-1 p-0 md:grid-cols-2">
+      <Card className="overflow-hidden p-0">
+        <CardContent className="p-0">
           <form
             className="flex flex-col items-center justify-center p-6 md:p-8"
             id="form-otp"
@@ -83,9 +83,9 @@ export function OTPForm({ className, email, ...props }: OTPFormProps) {
           >
             <FieldGroup>
               <Field className="items-center text-center">
-                <h1 className="text-2xl font-bold">Enter verification code</h1>
+                <h1 className="text-2xl font-bold">Verifica tu correo</h1>
                 <p className="text-muted-foreground text-sm text-balance">
-                  We sent a 6-digit code to {email}
+                  Enviamos un código de 6 dígitos a {email}
                 </p>
               </Field>
               {formError && (
@@ -93,7 +93,7 @@ export function OTPForm({ className, email, ...props }: OTPFormProps) {
               )}
               <Field>
                 <FieldLabel htmlFor="otp" className="sr-only">
-                  Verification code
+                  Código de verificación
                 </FieldLabel>
                 <InputOTP
                   maxLength={6}
@@ -117,12 +117,12 @@ export function OTPForm({ className, email, ...props }: OTPFormProps) {
                   </InputOTPGroup>
                 </InputOTP>
                 <FieldDescription className="text-center">
-                  Enter the 6-digit code sent to your email.
+                  Ingresa el código de 6 dígitos que enviamos a tu correo.
                 </FieldDescription>
               </Field>
               <Field className="gap-2">
                 <Button type="submit" form="form-otp" disabled={isLoading}>
-                  {isLoading ? <Spinner /> : "Verify"}
+                  {isLoading ? <Spinner /> : "Verificar"}
                 </Button>
                 <Button
                   variant="ghost"
@@ -130,26 +130,16 @@ export function OTPForm({ className, email, ...props }: OTPFormProps) {
                   onClick={() => router.push("/login")}
                   disabled={isLoading}
                 >
-                  Cancel
+                  Cancelar
                 </Button>
-                <FieldDescription className="text-center">
-                  Didn&apos;t receive the code? <a href="#">Resend</a>
-                </FieldDescription>
               </Field>
             </FieldGroup>
           </form>
-          <div className="bg-muted relative hidden md:block">
-            <img
-              src="/placeholder.svg"
-              alt="Image"
-              className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-            />
-          </div>
         </CardContent>
       </Card>
       <FieldDescription className="text-center">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-        and <a href="#">Privacy Policy</a>.
+        Al continuar, aceptas nuestros <a href="#">Términos de servicio</a> y
+        nuestra <a href="#">Política de privacidad</a>.
       </FieldDescription>
     </div>
   )

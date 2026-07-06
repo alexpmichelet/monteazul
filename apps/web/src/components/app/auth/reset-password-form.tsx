@@ -29,9 +29,9 @@ import * as z from "zod"
 const formSchema = z.object({
   newPassword: z
     .string()
-    .min(1, "New password is required")
-    .min(8, "New password must be at least 8 characters long"),
-  code: z.string().length(6, "Code must be 6 digits"),
+    .min(1, "La nueva contraseña es obligatoria")
+    .min(8, "La contraseña debe tener al menos 8 caracteres"),
+  code: z.string().length(6, "El código debe tener 6 dígitos"),
 })
 
 interface ResetPasswordFormProps extends React.ComponentProps<"div"> {
@@ -65,8 +65,9 @@ export function ResetPasswordForm({
         email,
         flow: "reset-verification",
       })
-      // Password reset successful - user is now signed in, redirect to dashboard
-      router.replace("/dashboard")
+      // Password reset successful — the User is now signed in, back to the
+      // public annuaire.
+      router.replace("/")
     } catch (error) {
       setFormError(getConvexErrorMessage(error))
       setIsLoading(false)
@@ -83,11 +84,11 @@ export function ResetPasswordForm({
 
   return (
     <div
-      className={cn("flex flex-col gap-6 md:min-h-[450px]", className)}
+      className={cn("flex flex-col gap-6", className)}
       {...props}
     >
-      <Card className="flex-1 overflow-hidden p-0">
-        <CardContent className="grid flex-1 p-0 md:grid-cols-2">
+      <Card className="overflow-hidden p-0">
+        <CardContent className="p-0">
           <form
             className="flex flex-col justify-center p-6 md:p-8"
             id="form-reset-password"
@@ -95,9 +96,10 @@ export function ResetPasswordForm({
           >
             <FieldGroup>
               <div className="flex flex-col items-center gap-2 text-center">
-                <h1 className="text-2xl font-bold">Reset password</h1>
+                <h1 className="text-2xl font-bold">Restablecer contraseña</h1>
                 <p className="text-muted-foreground text-sm text-balance">
-                  Enter the code sent to {email} and set a new password
+                  Ingresa el código enviado a {email} y define una nueva
+                  contraseña
                 </p>
               </div>
               {formError && (
@@ -110,7 +112,9 @@ export function ResetPasswordForm({
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="newPassword">New password</FieldLabel>
+                    <FieldLabel htmlFor="newPassword">
+                      Nueva contraseña
+                    </FieldLabel>
                     <PasswordInput
                       {...field}
                       id="newPassword"
@@ -118,7 +122,7 @@ export function ResetPasswordForm({
                       required
                     />
                     <FieldDescription>
-                      Must be at least 8 characters long.
+                      Debe tener al menos 8 caracteres.
                     </FieldDescription>
                     {fieldState.invalid && (
                       <FieldError errors={[fieldState.error]} />
@@ -131,7 +135,7 @@ export function ResetPasswordForm({
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="code">Verification code</FieldLabel>
+                    <FieldLabel htmlFor="code">Código de verificación</FieldLabel>
                     <InputOTP
                       maxLength={6}
                       id="code"
@@ -154,7 +158,7 @@ export function ResetPasswordForm({
                       </InputOTPGroup>
                     </InputOTP>
                     <FieldDescription>
-                      Enter the 6-digit code sent to your email.
+                      Ingresa el código de 6 dígitos que enviamos a tu correo.
                     </FieldDescription>
                     {fieldState.invalid && (
                       <FieldError errors={[fieldState.error]} />
@@ -168,7 +172,7 @@ export function ResetPasswordForm({
                   form="form-reset-password"
                   disabled={isLoading}
                 >
-                  {isLoading ? <Spinner /> : "Reset Password"}
+                  {isLoading ? <Spinner /> : "Restablecer contraseña"}
                 </Button>
                 <Button
                   variant="ghost"
@@ -176,27 +180,20 @@ export function ResetPasswordForm({
                   onClick={() => router.push("/login")}
                   disabled={isLoading}
                 >
-                  Cancel
+                  Cancelar
                 </Button>
                 <FieldDescription className="text-center">
-                  Didn&apos;t receive the code?{" "}
-                  <a href={`/forgot-password`}>Resend</a>
+                  ¿No recibiste el código?{" "}
+                  <a href={`/forgot-password`}>Reenviar</a>
                 </FieldDescription>
               </Field>
             </FieldGroup>
           </form>
-          <div className="bg-muted relative hidden md:block">
-            <img
-              src="/placeholder.svg"
-              alt="Image"
-              className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-            />
-          </div>
         </CardContent>
       </Card>
       <FieldDescription className="text-center">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-        and <a href="#">Privacy Policy</a>.
+        Al continuar, aceptas nuestros <a href="#">Términos de servicio</a> y
+        nuestra <a href="#">Política de privacidad</a>.
       </FieldDescription>
     </div>
   )

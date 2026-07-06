@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, MapPin, Search, User } from "lucide-react";
+import { ChevronDown, MapPin, Search } from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "@packages/backend/convex/_generated/api";
 
@@ -15,6 +15,7 @@ import {
   CommerceCardSkeleton,
   SearchBar,
 } from "@/components/directory";
+import { AccountMenu } from "./account-menu";
 import { CommerceCard } from "./commerce-card";
 
 function countLabel(count: number): string {
@@ -58,9 +59,7 @@ export function DirectoryScreen() {
             <span className="text-[17px] font-bold text-ink">Monteazul</span>
             <ChevronDown className="size-4 text-ink-muted" strokeWidth={2.2} />
           </div>
-          <div className="flex size-9 items-center justify-center rounded-full bg-muted text-primary">
-            <User className="size-[19px]" strokeWidth={2} />
-          </div>
+          <AccountMenu />
         </div>
 
         <div className="px-4 pb-3">
