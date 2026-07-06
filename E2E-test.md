@@ -24,3 +24,9 @@ Format par entrée :
 - [ ] **Inscription email/mot de passe (apps/web)** — Précondition : aucun compte pour `nuevo@example.com`. Action : `/signup` → email + mot de passe (≥8) → soumettre → saisir le code OTP reçu. Résultat : session ouverte, et le compte porte le rôle `user` par défaut.
 - [ ] **Connexion Google (apps/web et apps/admin)** — Précondition : provider Google configuré côté déploiement. Action : sur `/login`, cliquer « Continue with Google » et compléter l'écran Google. Résultat : redirection vers l'app avec une session active ; aucun bouton GitHub/Apple visible.
 - [ ] **Reset de mot de passe par email (apps/web)** — Précondition : compte existant `user@example.com`. Action : « Forgot your password? » → saisir l'email → entrer le code reçu → définir un nouveau mot de passe → se reconnecter. Résultat : reconnexion réussie avec le nouveau mot de passe (l'ancien est refusé, erreur affichée).
+
+## #4 — Table commerces, module horario, seed mock et listing public
+
+- [ ] **Listing publié uniquement** : lancer `npx convex run seed:seedDev` puis ouvrir `apps/web` (`/`) → les sections par catégorie s'affichent ; aucune fiche `pendiente` (« Snacks Verde Vida », « Trueques del Barrio ») ni `suspendido` (« Postres Dulce Monte ») n'apparaît.
+- [ ] **Filtre par chip** : cliquer la chip « Comida » → seule la section « Comida y bebida » reste visible ; cliquer « Todos » → toutes les sections publiées reviennent.
+- [ ] **Badge horario temps réel** : sur une carte en mode plages, le badge affiche « Abierto » avec « cierra a las HH:MM » pendant les heures d'ouverture (heure de Bogota) et « Cerrado · abre a las HH:MM » en dehors ; une fiche en mode disponible affiche « Disponible · sobre pedido / con cita previa ».
