@@ -1,9 +1,11 @@
 import {
   COMIDA_SUBCATEGORIES,
   COMMERCE_CATEGORIES,
+  type CommerceCategory,
   isComidaCategory,
 } from "@packages/shared/categories";
 import { v } from "convex/values";
+import type { Horario } from "./horario";
 
 /**
  * Commerce domain enums and validators (see the backend CONTEXT.md glossary).
@@ -126,4 +128,75 @@ export function commerceSearchText(input: SearchableCommerce): string {
       input.description,
     ].join(" "),
   );
+}
+
+/**
+ * The fields a fiche form provides — the shared shape of the entrepreneur
+ * submission, the entrepreneur edit and the admin edit. Category and resides are
+ * plain strings here (validated by `assertValidCommerceForm`) so the back-office
+ * can pass the form values as-is.
+ */
+export type CommerceFormInput = {
+  name: string;
+  category: string;
+  subcategories?: string[];
+  description: string;
+  whatsapp: string;
+  horario: Horario;
+  torreApto?: string;
+  instagram?: string;
+  contactName?: string;
+  resides: string;
+  notas?: string;
+};
+
+/**
+ * Enforce the shared fiche-form business rules — the ones a Convex schema
+ * validator cannot express: WhatsApp exactly 10 digits, sub-categories only for
+ * « Comida y bebida », ¿Resides? among the three values. Throws a Spanish
+ * `Error` on the first violation; the mutations wrap it in a `ConvexError`.
+ * Single source of truth so submission and every edit validate identically.
+ */
+export function assertValidCommerceForm(input: CommerceFormInput): void {
+  assertValidCommerce({
+    category: input.category,
+    subcategories: input.subcategories,
+    whatsapp: input.whatsapp,
+  });
+  if (!RESIDES_VALUES.includes(input.resides as ResidesValue)) {
+    throw new Error("El valor de ¿Resides en Monteazul? no es válido.");
+  }
+}
+
+/**
+ * Build the mutable Commerce document fields written on submission and on every
+ * edit — everything EXCEPT `estado`, `ownerId` and `photos` (managed
+ * separately). Empty sub-categories collapse to `undefined`, and the search
+ * haystack is recomputed here so it can never drift from the stored document.
+ * Callers must validate with `assertValidCommerceForm` first.
+ */
+export function commerceWriteFields(input: CommerceFormInput) {
+  const subcategories =
+    input.subcategories && input.subcategories.length > 0
+      ? input.subcategories
+      : undefined;
+  return {
+    name: input.name,
+    category: input.category as CommerceCategory,
+    subcategories,
+    description: input.description,
+    whatsapp: input.whatsapp,
+    horario: input.horario,
+    torreApto: input.torreApto,
+    instagram: input.instagram,
+    contactName: input.contactName,
+    searchText: commerceSearchText({
+      name: input.name,
+      category: input.category,
+      subcategories,
+      description: input.description,
+    }),
+    resides: input.resides as ResidesValue,
+    notas: input.notas,
+  };
 }

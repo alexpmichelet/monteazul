@@ -1,4 +1,3 @@
-import type { CommerceCategory } from "@packages/shared/categories";
 import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import {
@@ -12,11 +11,9 @@ import {
   estadoAfter,
 } from "../lib/approval";
 import {
-  RESIDES_VALUES,
-  type ResidesValue,
-  assertValidCommerce,
+  assertValidCommerceForm,
   categoryValidator,
-  commerceSearchText,
+  commerceWriteFields,
   estadoValidator,
   horarioValidator,
 } from "../lib/commerce";
@@ -219,45 +216,15 @@ export const updateCommerce = mutation({
     }
 
     try {
-      assertValidCommerce({
-        category: args.category,
-        subcategories: args.subcategories,
-        whatsapp: args.whatsapp,
-      });
-      if (!RESIDES_VALUES.includes(args.resides as ResidesValue)) {
-        throw new Error("El valor de ¿Resides en Monteazul? no es válido.");
-      }
+      assertValidCommerceForm(args);
     } catch (error) {
       throw new ConvexError({
         message: error instanceof Error ? error.message : "Datos inválidos.",
       });
     }
 
-    const subcategories =
-      args.subcategories && args.subcategories.length > 0
-        ? args.subcategories
-        : undefined;
-
     // Deliberately does not touch `estado` nor `ownerId`.
-    await ctx.db.patch(args.commerceId, {
-      name: args.name,
-      category: args.category as CommerceCategory,
-      subcategories,
-      description: args.description,
-      whatsapp: args.whatsapp,
-      horario: args.horario,
-      torreApto: args.torreApto,
-      instagram: args.instagram,
-      contactName: args.contactName,
-      searchText: commerceSearchText({
-        name: args.name,
-        category: args.category,
-        subcategories,
-        description: args.description,
-      }),
-      resides: args.resides as ResidesValue,
-      notas: args.notas,
-    });
+    await ctx.db.patch(args.commerceId, commerceWriteFields(args));
   },
 });
 

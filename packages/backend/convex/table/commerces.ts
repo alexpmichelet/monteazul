@@ -8,20 +8,24 @@ import {
 import { defineTable } from "convex/server";
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "../_generated/server";
-import type { Doc } from "../_generated/dataModel";
-import type { QueryCtx } from "../_generated/server";
+import type { Doc, Id } from "../_generated/dataModel";
+import type { MutationCtx, QueryCtx } from "../_generated/server";
+import { type EstadoAction, estadoAfter } from "../lib/approval";
 import {
   RESIDES_VALUES,
-  type ResidesValue,
-  assertValidCommerce,
+  assertValidCommerceForm,
   categoryValidator,
-  commerceSearchText,
+  commerceWriteFields,
   estadoValidator,
   horarioValidator,
   normalizeForSearch,
   residesValidator,
 } from "../lib/commerce";
-import { requireAuthenticated, requireCommerceOwnerOrAdmin } from "../rbac";
+import {
+  requireAuthenticated,
+  requireCommerceOwner,
+  requireCommerceOwnerOrAdmin,
+} from "../rbac";
 import {
   MAX_PHOTO_BYTES,
   MAX_PHOTO_MB,
@@ -347,44 +351,16 @@ export const submitCommerce = mutation({
 
     // Business rules a schema validator cannot express — surfaced in Spanish.
     try {
-      assertValidCommerce({
-        category: args.category,
-        subcategories: args.subcategories,
-        whatsapp: args.whatsapp,
-      });
-      if (!RESIDES_VALUES.includes(args.resides as ResidesValue)) {
-        throw new Error("El valor de ¿Resides en Monteazul? no es válido.");
-      }
+      assertValidCommerceForm(args);
     } catch (error) {
       throw new ConvexError({
         message: error instanceof Error ? error.message : "Datos inválidos.",
       });
     }
 
-    const subcategories =
-      args.subcategories && args.subcategories.length > 0
-        ? args.subcategories
-        : undefined;
-
     const commerceId = await ctx.db.insert("commerces", {
-      name: args.name,
-      category: args.category as CommerceCategory,
-      subcategories,
-      description: args.description,
-      whatsapp: args.whatsapp,
+      ...commerceWriteFields(args),
       photos: [],
-      horario: args.horario,
-      torreApto: args.torreApto,
-      instagram: args.instagram,
-      contactName: args.contactName,
-      searchText: commerceSearchText({
-        name: args.name,
-        category: args.category,
-        subcategories,
-        description: args.description,
-      }),
-      resides: args.resides as ResidesValue,
-      notas: args.notas,
       estado: "pendiente",
       ownerId: userId,
     });
@@ -397,6 +373,94 @@ export const submitCommerce = mutation({
 
     return commerceId;
   },
+});
+
+/**
+ * Edit the caller's OWN fiche from « Mi negocio », with the SAME validations as
+ * the submission (`submitCommerce`): WhatsApp exactly 10 digits, sub-categories
+ * only for « Comida y bebida », ¿Resides? among the three values. Recomputes the
+ * search haystack. Guarded by `requireCommerceOwner`, so only the owner may edit
+ * — never another account (a non-owner is refused).
+ *
+ * Crucially, it NEVER changes the `estado` nor the `ownerId`: editing a
+ * `publicado` fiche keeps it online with the changes (moderación a posteriori),
+ * it does not send it back to approval.
+ */
+export const updateMyCommerce = mutation({
+  args: {
+    commerceId: v.id("commerces"),
+    name: v.string(),
+    category: v.string(),
+    subcategories: v.optional(v.array(v.string())),
+    description: v.string(),
+    whatsapp: v.string(),
+    horario: horarioValidator,
+    torreApto: v.optional(v.string()),
+    instagram: v.optional(v.string()),
+    contactName: v.optional(v.string()),
+    resides: v.string(),
+    notas: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await requireCommerceOwner(ctx, args.commerceId);
+
+    // Same business rules as submission — surfaced in Spanish.
+    try {
+      assertValidCommerceForm(args);
+    } catch (error) {
+      throw new ConvexError({
+        message: error instanceof Error ? error.message : "Datos inválidos.",
+      });
+    }
+
+    // Deliberately does not touch `estado` nor `ownerId`.
+    await ctx.db.patch(args.commerceId, commerceWriteFields(args));
+  },
+});
+
+/**
+ * Drive one of the owner's reversible Estado transitions on their OWN fiche,
+ * delegating the allowed-transition decision to the shared `approval` state
+ * machine (never re-encoding it here). Owner-guarded via `requireCommerceOwner`,
+ * so a non-owner is refused. A rejected transition surfaces as a Spanish
+ * `ConvexError` the back-office renders.
+ */
+async function applyOwnerEstadoAction(
+  ctx: MutationCtx,
+  commerceId: Id<"commerces">,
+  action: EstadoAction,
+): Promise<void> {
+  const { commerce } = await requireCommerceOwner(ctx, commerceId);
+  let estado;
+  try {
+    estado = estadoAfter(commerce.estado, action);
+  } catch (error) {
+    throw new ConvexError({
+      message:
+        error instanceof Error ? error.message : "Transición no permitida.",
+    });
+  }
+  await ctx.db.patch(commerceId, { estado });
+}
+
+/**
+ * « Suspender mi publicación »: `publicado → suspendido`. The fiche disappears
+ * from the public annuaire at once. Owner only.
+ */
+export const suspendMyCommerce = mutation({
+  args: { commerceId: v.id("commerces") },
+  handler: (ctx, args) =>
+    applyOwnerEstadoAction(ctx, args.commerceId, "suspend"),
+});
+
+/**
+ * « Reactivar mi publicación »: `suspendido → publicado`, back online WITHOUT
+ * any admin re-approval. Owner only.
+ */
+export const reactivateMyCommerce = mutation({
+  args: { commerceId: v.id("commerces") },
+  handler: (ctx, args) =>
+    applyOwnerEstadoAction(ctx, args.commerceId, "reactivate"),
 });
 
 // ===========================================================================
