@@ -21,6 +21,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@hookform/resolvers": "^5.2.2",
     "@packages/backend": "workspace:*",
+    "@packages/shared": "workspace:*",
     "@tabler/icons-react": "^3.36.1",
     "@tanstack/react-table": "^8.21.3",
     "class-variance-authority": "^0.7.1",

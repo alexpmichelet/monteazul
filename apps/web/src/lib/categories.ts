@@ -1,4 +1,9 @@
 import {
+  CATEGORY_CHIP_TOKENS,
+  TODOS_CHIP,
+  type CommerceCategory,
+} from "@packages/shared/categories";
+import {
   HeartPulse,
   House,
   LayoutGrid,
@@ -11,15 +16,14 @@ import {
 } from "lucide-react";
 
 /**
- * Category design tokens for the Monteazul directory chips.
+ * Category filter chips for the Monteazul directory.
  *
- * Source of truth: `docs/product/design.md` (colour + pastel per category)
- * and the Claude Design prototype `Directorio Monteazul.dc.html`. Only the
- * categories documented there are modelled here — the design system does not
- * invent tokens for categories without a documented colour.
- *
- * `category` is the canonical Spanish Commerce category (see the backend
- * CONTEXT.md vocabulary); the "Todos" filter chip maps to no category.
+ * The colour/pastel/short-label tokens are the single source of truth in
+ * `@packages/shared` (derived from `docs/product/design.md`); this module only
+ * adds what is web-specific: the Lucide icon per chip and the "Todos" filter.
+ * Only the seven categories with a documented chip token appear as chips —
+ * `Inmuebles y servicios` and `Otro` are valid Commerce categories but, exactly
+ * like the prototype, render only as list sections (no coloured filter chip).
  */
 export type CategoryKey =
   | "todos"
@@ -36,7 +40,7 @@ export type CategoryChip = {
   /** Short label rendered under the chip icon (matches the prototype). */
   label: string;
   /** Canonical Spanish Commerce category, or null for the "Todos" filter. */
-  category: string | null;
+  category: CommerceCategory | null;
   /** Accent colour used for the active chip and icon. */
   color: string;
   /** Soft pastel used for the resting chip background. */
@@ -44,72 +48,38 @@ export type CategoryChip = {
   Icon: LucideIcon;
 };
 
-export const CATEGORY_CHIPS: readonly CategoryChip[] = [
-  {
-    key: "todos",
-    label: "Todos",
-    category: null,
-    color: "#1C2E4A",
-    pastel: "#EEF1F6",
-    Icon: LayoutGrid,
+const CHIP_ICONS: {
+  key: CategoryKey;
+  category: CommerceCategory | null;
+  Icon: LucideIcon;
+}[] = [
+  { key: "todos", category: null, Icon: LayoutGrid },
+  { key: "comida", category: "Comida y bebida", Icon: Utensils },
+  { key: "mascotas", category: "Mascotas", Icon: PawPrint },
+  { key: "belleza", category: "Belleza y cuidado personal", Icon: Scissors },
+  { key: "salud", category: "Salud y bienestar", Icon: HeartPulse },
+  { key: "ropa", category: "Accesorios y ropa", Icon: Shirt },
+  { key: "hogar", category: "Hogar y artesanías", Icon: House },
+  { key: "tecnologia", category: "Tecnología", Icon: Smartphone },
+];
+
+export const CATEGORY_CHIPS: readonly CategoryChip[] = CHIP_ICONS.map(
+  ({ key, category, Icon }) => {
+    const token =
+      category === null ? TODOS_CHIP : CATEGORY_CHIP_TOKENS[category];
+    if (!token) {
+      throw new Error(`Missing chip token for category: ${category}`);
+    }
+    return {
+      key,
+      category,
+      label: token.label,
+      color: token.color,
+      pastel: token.pastel,
+      Icon,
+    };
   },
-  {
-    key: "comida",
-    label: "Comida",
-    category: "Comida y bebida",
-    color: "#E07B39",
-    pastel: "#FBEEE3",
-    Icon: Utensils,
-  },
-  {
-    key: "mascotas",
-    label: "Mascotas",
-    category: "Mascotas",
-    color: "#0E9E8E",
-    pastel: "#E0F2EF",
-    Icon: PawPrint,
-  },
-  {
-    key: "belleza",
-    label: "Belleza",
-    category: "Belleza y cuidado personal",
-    color: "#C85BA0",
-    pastel: "#F7E7F1",
-    Icon: Scissors,
-  },
-  {
-    key: "salud",
-    label: "Salud",
-    category: "Salud y bienestar",
-    color: "#2E9E5B",
-    pastel: "#E4F4EA",
-    Icon: HeartPulse,
-  },
-  {
-    key: "ropa",
-    label: "Ropa",
-    category: "Accesorios y ropa",
-    color: "#5B62D6",
-    pastel: "#E8E9FB",
-    Icon: Shirt,
-  },
-  {
-    key: "hogar",
-    label: "Hogar",
-    category: "Hogar y artesanías",
-    color: "#C2922B",
-    pastel: "#F6EEDA",
-    Icon: House,
-  },
-  {
-    key: "tecnologia",
-    label: "Tecnología",
-    category: "Tecnología",
-    color: "#3D7FD1",
-    pastel: "#E4EEFA",
-    Icon: Smartphone,
-  },
-] as const;
+);
 
 export const CATEGORY_CHIP_BY_KEY = Object.fromEntries(
   CATEGORY_CHIPS.map((chip) => [chip.key, chip]),

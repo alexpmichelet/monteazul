@@ -5,7 +5,11 @@
   "main": "constants.js",
   "exports": {
     ".": "./constants.js",
-    "./constants": "./constants.js"
+    "./constants": "./constants.js",
+    "./categories": {
+      "types": "./categories.d.ts",
+      "default": "./categories.js"
+    }
   },
   "scripts": {
     "test": "vitest run",
