@@ -35,13 +35,20 @@ export function DirectoryScreen() {
   const activeCategory = CATEGORY_CHIP_BY_KEY[activeKey].category;
   const trimmedQuery = queryText.trim();
 
-  // Search (accent- and case-insensitive) and the active category chip both
-  // resolve server-side against the normalised `search_text` index — the query
-  // returns only `publicado` fiches, already grouped and filtered.
-  const sections = useQuery(api.table.commerces.searchPublic, {
+  // Search (accent- and case-insensitive) resolves server-side against the
+  // normalised `search_text` index; the query returns only `publicado` fiches,
+  // grouped by category. The category CHIP is applied client-side below, so
+  // switching categories is instant — no refetch, no skeleton flash — because
+  // the full grouped result stays cached by Convex under stable query args.
+  const allSections = useQuery(api.table.commerces.searchPublic, {
     text: trimmedQuery.length > 0 ? trimmedQuery : undefined,
-    category: activeCategory ?? undefined,
   });
+
+  const sections = React.useMemo(() => {
+    if (allSections === undefined) return undefined;
+    if (activeCategory === null) return allSections;
+    return allSections.filter((section) => section.category === activeCategory);
+  }, [allSections, activeCategory]);
 
   // Recompute the opening badges every minute so "Abierto/Cerrado" stays live.
   const [now, setNow] = React.useState(() => new Date());
@@ -51,9 +58,9 @@ export function DirectoryScreen() {
   }, []);
 
   return (
-    <div className="mx-auto min-h-screen max-w-[480px] bg-surface shadow-[0_0_60px_rgba(20,30,50,0.1)]">
+    <div className="mx-auto min-h-screen max-w-[480px] bg-surface shadow-[0_0_60px_rgba(20,30,50,0.1)] lg:max-w-6xl lg:shadow-none">
       <header className="sticky top-0 z-30 border-b border-hairline bg-surface">
-        <div className="flex items-center justify-between px-4 pb-2.5 pt-4">
+        <div className="flex items-center justify-between px-4 pb-2.5 pt-4 lg:px-8">
           <div className="flex items-center gap-[7px]">
             <MapPin className="size-[18px] text-primary" strokeWidth={2.2} />
             <span className="text-[17px] font-bold text-ink">Monteazul</span>
@@ -62,11 +69,11 @@ export function DirectoryScreen() {
           <AccountMenu />
         </div>
 
-        <div className="px-4 pb-3">
+        <div className="px-4 pb-3 lg:px-8">
           <SearchBar value={queryText} onValueChange={setQueryText} />
         </div>
 
-        <div className="flex gap-1.5 overflow-x-auto px-3 pb-3.5 pt-0.5 [scrollbar-width:none]">
+        <div className="flex gap-1.5 overflow-x-auto px-3 pb-3.5 pt-0.5 [scrollbar-width:none] lg:flex-wrap lg:overflow-visible lg:px-8">
           {CATEGORY_CHIPS.map((chip) => (
             <CategoryChip
               key={chip.key}
@@ -86,7 +93,7 @@ export function DirectoryScreen() {
         ) : (
           sections.map((section) => (
             <section key={section.category} className="pb-0.5 pt-[18px]">
-              <div className="flex items-baseline justify-between px-4 pb-[11px]">
+              <div className="flex items-baseline justify-between px-4 pb-[11px] lg:px-8">
                 <span className="text-lg font-bold tracking-[-0.01em] text-ink">
                   {section.category}
                 </span>
@@ -94,7 +101,9 @@ export function DirectoryScreen() {
                   {countLabel(section.count)}
                 </span>
               </div>
-              <div className="flex snap-x gap-3.5 overflow-x-auto px-4 pb-1.5 [scrollbar-width:none]">
+              {/* Horizontal snap-scroll on mobile; a wrapping multi-column grid
+                  on desktop so the cards fill the wide layout. */}
+              <div className="flex snap-x gap-3.5 overflow-x-auto px-4 pb-1.5 [scrollbar-width:none] lg:grid lg:grid-cols-2 lg:gap-x-5 lg:gap-y-6 lg:overflow-visible lg:px-8 xl:grid-cols-3 2xl:grid-cols-4">
                 {section.commerces.map((commerce) => (
                   <CommerceCard
                     key={commerce._id}
@@ -116,12 +125,12 @@ function LoadingSections() {
     <>
       {[0, 1].map((row) => (
         <section key={row} className="pb-0.5 pt-[18px]">
-          <div className="px-4 pb-[11px]">
+          <div className="px-4 pb-[11px] lg:px-8">
             <div className="h-[18px] w-40 animate-pulse rounded-md bg-muted" />
           </div>
-          <div className="flex gap-3.5 overflow-hidden px-4 pb-1.5">
+          <div className="flex gap-3.5 overflow-hidden px-4 pb-1.5 lg:grid lg:grid-cols-2 lg:gap-x-5 lg:gap-y-6 lg:px-8 xl:grid-cols-3 2xl:grid-cols-4">
             {[0, 1, 2].map((card) => (
-              <CommerceCardSkeleton key={card} />
+              <CommerceCardSkeleton key={card} className="lg:w-full" />
             ))}
           </div>
         </section>

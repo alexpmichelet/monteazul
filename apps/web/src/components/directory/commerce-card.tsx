@@ -49,7 +49,7 @@ function CommerceCard({
       href={`/negocio/${commerce._id}`}
       aria-label={commerce.name}
       data-slot="commerce-card"
-      className="block w-[204px] shrink-0 snap-start"
+      className="block w-[204px] shrink-0 snap-start lg:w-full"
     >
       <div
         className="relative flex h-[132px] items-end overflow-hidden rounded-card p-2.5"
@@ -60,7 +60,7 @@ function CommerceCard({
             src={photo}
             alt={commerce.name}
             fill
-            sizes="204px"
+            sizes="(min-width: 1024px) 340px, 204px"
             className="object-cover"
           />
         ) : null}

@@ -124,12 +124,18 @@ export function SignupForm({
                 )}
               />
               <Field>
-                <Field className="grid grid-cols-2 gap-4">
+                {/* Subgrid: the two columns share row tracks, so both inputs
+                    stay aligned even when "Confirmar contraseña" wraps to two
+                    lines while "Contraseña" fits on one. */}
+                <Field className="grid grid-cols-2 grid-rows-[auto_auto] gap-x-4 gap-y-2">
                   <Controller
                     name="password"
                     control={form.control}
                     render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
+                      <Field
+                        data-invalid={fieldState.invalid}
+                        className="grid grid-rows-subgrid row-span-2"
+                      >
                         <FieldLabel htmlFor="password">Contraseña</FieldLabel>
                         <PasswordInput
                           {...field}
@@ -147,7 +153,10 @@ export function SignupForm({
                     name="confirmPassword"
                     control={form.control}
                     render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
+                      <Field
+                        data-invalid={fieldState.invalid}
+                        className="grid grid-rows-subgrid row-span-2"
+                      >
                         <FieldLabel htmlFor="confirmPassword">
                           Confirmar contraseña
                         </FieldLabel>
