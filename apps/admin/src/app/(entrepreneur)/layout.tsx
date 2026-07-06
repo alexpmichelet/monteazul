@@ -6,6 +6,7 @@ import { useAuthActions } from "@convex-dev/auth/react";
 import { IconLogout } from "@tabler/icons-react";
 import { EntrepreneurGuard } from "@/components/app/entrepreneur/entrepreneur-guard";
 import { Button } from "@/components/ui/button";
+import { Toaster } from "@/components/ui/sonner";
 
 export default function EntrepreneurLayout({
   children,
@@ -34,6 +35,7 @@ export default function EntrepreneurLayout({
         </header>
         <main className="flex-1 p-4 md:p-8">{children}</main>
       </div>
+      <Toaster />
     </EntrepreneurGuard>
   );
 }

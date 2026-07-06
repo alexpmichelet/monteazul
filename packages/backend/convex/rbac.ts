@@ -91,6 +91,30 @@ export async function requireCommerceOwner(
 }
 
 /**
+ * Require the caller to be the owner of a given Commerce, OR the Super admin.
+ *
+ * Backs the photo mutations, where the glossary rule is « seul le propriétaire
+ * (ou un admin) modifie les photos d'une fiche ». Same contract as
+ * `requireCommerceOwner` — refuses an anonymous caller and an unknown Commerce —
+ * but additionally accepts an `admin` caller on any fiche. Returns the caller id
+ * and the target Commerce.
+ */
+export async function requireCommerceOwnerOrAdmin(
+  ctx: QueryCtx | MutationCtx,
+  commerceId: Id<"commerces">
+): Promise<OwnedCommerce> {
+  const { userId, user } = await requireAuthenticated(ctx);
+  const commerce = await ctx.db.get(commerceId);
+  if (!commerce) {
+    throw new ConvexError({ message: "Negocio no encontrado." });
+  }
+  if (commerce.ownerId !== userId && user.role !== "admin") {
+    throw new ConvexError({ message: "No tienes acceso a este negocio." });
+  }
+  return { userId, commerce };
+}
+
+/**
  * Assign the default role (`user`) to a freshly created account.
  *
  * Called from Convex Auth's `afterUserCreatedOrUpdated` callback. Only touches

@@ -18,6 +18,7 @@ import type * as lib_auth_passwordCrypto from "../lib/auth/passwordCrypto.js";
 import type * as lib_auth_roles from "../lib/auth/roles.js";
 import type * as lib_commerce from "../lib/commerce.js";
 import type * as lib_horario from "../lib/horario.js";
+import type * as lib_photos from "../lib/photos.js";
 import type * as lib_tracking from "../lib/tracking.js";
 import type * as migrations from "../migrations.js";
 import type * as rbac from "../rbac.js";
@@ -49,6 +50,7 @@ declare const fullApi: ApiFromModules<{
   "lib/auth/roles": typeof lib_auth_roles;
   "lib/commerce": typeof lib_commerce;
   "lib/horario": typeof lib_horario;
+  "lib/photos": typeof lib_photos;
   "lib/tracking": typeof lib_tracking;
   migrations: typeof migrations;
   rbac: typeof rbac;

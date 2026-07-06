@@ -73,7 +73,7 @@ describe("addPhoto — upload et ordre", () => {
     const commerceId = await makeCommerce(t, ownerId);
     const storageId = await storeImage(t, { type: "image/png" });
 
-    await t
+    const result = await t
       .withIdentity({ subject: ownerId })
       .mutation(api.table.commerces.addPhoto, {
         commerceId,
@@ -81,6 +81,7 @@ describe("addPhoto — upload et ordre", () => {
         contentType: "image/png",
       });
 
+    expect(result).toEqual({ ok: true, storageId });
     expect(await photosOf(t, commerceId)).toEqual([storageId]);
   });
 
@@ -110,15 +111,18 @@ describe("addPhoto — upload et ordre", () => {
     const commerceId = await makeCommerce(t, ownerId);
     const storageId = await storeImage(t, { type: "application/pdf" });
 
-    await expect(
-      t.withIdentity({ subject: ownerId }).mutation(
-        api.table.commerces.addPhoto,
-        { commerceId, storageId, contentType: "application/pdf" },
-      ),
-    ).rejects.toThrow(/imagen/i);
+    const result = await t
+      .withIdentity({ subject: ownerId })
+      .mutation(api.table.commerces.addPhoto, {
+        commerceId,
+        storageId,
+        contentType: "application/pdf",
+      });
 
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toMatch(/imág|imagen/i);
     expect(await photosOf(t, commerceId)).toEqual([]);
-    // The rejected blob is removed from storage.
+    // The rejected blob is removed from storage (no orphan).
     const url = await t.run((ctx) => ctx.storage.getUrl(storageId));
     expect(url).toBeNull();
   });
@@ -132,14 +136,19 @@ describe("addPhoto — upload et ordre", () => {
       bytes: MAX_PHOTO_BYTES + 1,
     });
 
-    await expect(
-      t.withIdentity({ subject: ownerId }).mutation(
-        api.table.commerces.addPhoto,
-        { commerceId, storageId, contentType: "image/jpeg" },
-      ),
-    ).rejects.toThrow(/tamaño|máximo|MB/i);
+    const result = await t
+      .withIdentity({ subject: ownerId })
+      .mutation(api.table.commerces.addPhoto, {
+        commerceId,
+        storageId,
+        contentType: "image/jpeg",
+      });
 
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toMatch(/tamaño|máximo|MB/i);
     expect(await photosOf(t, commerceId)).toEqual([]);
+    const url = await t.run((ctx) => ctx.storage.getUrl(storageId));
+    expect(url).toBeNull();
   });
 });
 
