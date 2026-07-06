@@ -1,7 +1,9 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { defineTable } from "convex/server";
 import { v } from "convex/values";
-import { mutation } from "../_generated/server";
+import { mutation, query } from "../_generated/server";
+import { requireCommerceOwner } from "../rbac";
+import { aggregateEvents } from "../lib/stats";
 import { bogotaDayKey } from "../lib/tracking";
 
 /**
@@ -117,5 +119,40 @@ export const recordVisit = mutation({
       visitDay,
     });
     return null;
+  },
+});
+
+/** Period granularity backing the Estadísticas evolution chart selector. */
+export const statsGranularityValidator = v.union(
+  v.literal("day"),
+  v.literal("week"),
+  v.literal("month"),
+);
+
+/**
+ * The Entrepreneur's statistics for one Commerce: totals (Visites, Contactos
+ * por WhatsApp) and a day/week/month evolution series, aggregated AT READ from
+ * the Événement journal — never from stored counters (ADR-0001). Buckets are
+ * anchored to America/Bogota (see `lib/stats`).
+ *
+ * Guarded by ownership through `requireCommerceOwner`: an Entrepreneur only ever
+ * reads their OWN fiche's stats. A non-owner, a plain User and an anonymous
+ * caller are all refused.
+ */
+export const statsForCommerce = query({
+  args: {
+    commerceId: v.id("commerces"),
+    granularity: statsGranularityValidator,
+  },
+  handler: async (ctx, args) => {
+    await requireCommerceOwner(ctx, args.commerceId);
+    const events = await ctx.db
+      .query("events")
+      .withIndex("by_commerce", (q) => q.eq("commerceId", args.commerceId))
+      .collect();
+    return aggregateEvents(
+      events.map((e) => ({ type: e.type, timestamp: e.timestamp })),
+      args.granularity,
+    );
   },
 });

@@ -61,11 +61,11 @@ describe("EstadisticasView", () => {
     );
   });
 
-  it("renders the evolution chart with the period selector", () => {
+  it("renders the evolution chart with the period selector when there is data", () => {
     const client = new ConvexReactClientFake();
     client.registerQueryFake(api.table.events.statsForCommerce, () => ({
-      totals: { visits: 0, whatsappContacts: 0 },
-      series: [],
+      totals: { visits: 3, whatsappContacts: 1 },
+      series: [{ bucket: "2026-07-06", visits: 3, whatsappContacts: 1 }],
     }));
 
     renderWithConvex(<EstadisticasView commerceId={commerceId} />, { client });
@@ -74,5 +74,17 @@ describe("EstadisticasView", () => {
     expect(screen.getByRole("button", { name: "Día" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Semana" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Mes" })).toBeTruthy();
+  });
+
+  it("shows an empty state when there are no data points", () => {
+    const client = new ConvexReactClientFake();
+    client.registerQueryFake(api.table.events.statsForCommerce, () => ({
+      totals: { visits: 0, whatsappContacts: 0 },
+      series: [],
+    }));
+
+    renderWithConvex(<EstadisticasView commerceId={commerceId} />, { client });
+
+    expect(screen.getByText("Aún no hay datos para mostrar.")).toBeTruthy();
   });
 });
