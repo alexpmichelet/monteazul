@@ -18,3 +18,9 @@ Format par entrée :
 - [ ] Ouvrir `/design-system` sur un viewport mobile (≤ 480px) → la page s'affiche centrée sur fond gris `#e7eaef`, sur une surface blanche max 480px, en police Geist ; toutes les sections de primitives sont visibles.
 - [ ] Dans la section « Chips de categoría », toucher une chip (ex. « Comida ») → sa pastille passe au fond de couleur pleine de la catégorie avec icône blanche et libellé en gras, tandis que les autres chips restent au repos (pastel).
 - [ ] Dans la section « Toast de redirección », cliquer « Mostrar toast de WhatsApp » → un toast navy avec l'icône WhatsApp et le texte « Redirigiendo a WhatsApp de Panadería El Trigal… » apparaît puis disparaît au bout de ~2,6 s.
+
+## #3 — Rôles user|entreprise|admin, providers Password+Google, hashage réel des mots de passe
+
+- [ ] **Inscription email/mot de passe (apps/web)** — Précondition : aucun compte pour `nuevo@example.com`. Action : `/signup` → email + mot de passe (≥8) → soumettre → saisir le code OTP reçu. Résultat : session ouverte, et le compte porte le rôle `user` par défaut.
+- [ ] **Connexion Google (apps/web et apps/admin)** — Précondition : provider Google configuré côté déploiement. Action : sur `/login`, cliquer « Continue with Google » et compléter l'écran Google. Résultat : redirection vers l'app avec une session active ; aucun bouton GitHub/Apple visible.
+- [ ] **Reset de mot de passe par email (apps/web)** — Précondition : compte existant `user@example.com`. Action : « Forgot your password? » → saisir l'email → entrer le code reçu → définir un nouveau mot de passe → se reconnecter. Résultat : reconnexion réussie avec le nouveau mot de passe (l'ancien est refusé, erreur affichée).
