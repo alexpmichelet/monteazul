@@ -120,7 +120,13 @@ function LoginInviteDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="mt-2 sm:flex-col">
-          <AuthCtaButtons className="w-full" />
+          {/* Close the invitation before navigating, so it doesn't stay open
+              over the login / signup screen (this dialog lives in a provider
+              that survives client-side navigation). */}
+          <AuthCtaButtons
+            className="w-full"
+            onNavigate={() => onOpenChange(false)}
+          />
         </DialogFooter>
       </DialogContent>
     </Dialog>

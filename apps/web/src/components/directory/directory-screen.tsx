@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, MapPin, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "@packages/backend/convex/_generated/api";
 
@@ -57,16 +57,28 @@ export function DirectoryScreen() {
     return () => clearInterval(id);
   }, []);
 
+  // Header greeting: a signed-in User is welcomed by name (ellipsized so a long
+  // name can't blow out the header), an anonymous Visiteur sees the app name.
+  // `undefined` (auth loading) is treated as anonymous to avoid a greeting flash.
+  const me = useQuery(api.table.users.currentUser);
+  const headerTitle = me
+    ? me.name?.trim()
+      ? `Bienvenido, ${me.name.trim()}`
+      : "Bienvenido"
+    : "Directorio Monteazul";
+
   return (
     <div className="mx-auto min-h-screen max-w-[480px] bg-surface shadow-[0_0_60px_rgba(20,30,50,0.1)] lg:max-w-6xl lg:shadow-none">
       <header className="sticky top-0 z-30 border-b border-hairline bg-surface">
-        <div className="flex items-center justify-between px-4 pb-2.5 pt-4 lg:px-8">
-          <div className="flex items-center gap-[7px]">
-            <MapPin className="size-[18px] text-primary" strokeWidth={2.2} />
-            <span className="text-[17px] font-bold text-ink">Monteazul</span>
-            <ChevronDown className="size-4 text-ink-muted" strokeWidth={2.2} />
+        <div className="flex items-center justify-between gap-2 px-4 pb-2.5 pt-4 lg:px-8">
+          <div className="flex min-w-0 items-center gap-[7px]">
+            <span className="truncate text-[17px] font-bold text-ink">
+              {headerTitle}
+            </span>
           </div>
-          <AccountMenu />
+          <div className="shrink-0">
+            <AccountMenu />
+          </div>
         </div>
 
         <div className="px-4 pb-3 lg:px-8">
@@ -103,7 +115,7 @@ export function DirectoryScreen() {
               </div>
               {/* Horizontal snap-scroll on mobile; a wrapping multi-column grid
                   on desktop so the cards fill the wide layout. */}
-              <div className="flex snap-x gap-3.5 overflow-x-auto px-4 pb-1.5 [scrollbar-width:none] lg:grid lg:grid-cols-2 lg:gap-x-5 lg:gap-y-6 lg:overflow-visible lg:px-8 xl:grid-cols-3 2xl:grid-cols-4">
+              <div className="flex snap-x gap-3.5 overflow-x-auto pb-1.5 pl-4 [scrollbar-width:none] lg:grid lg:grid-cols-2 lg:gap-x-5 lg:gap-y-6 lg:overflow-visible lg:px-8 xl:grid-cols-3 2xl:grid-cols-4">
                 {section.commerces.map((commerce) => (
                   <CommerceCard
                     key={commerce._id}
@@ -111,6 +123,12 @@ export function DirectoryScreen() {
                     now={now}
                   />
                 ))}
+                {/* Trailing gutter so the last card keeps its right padding once
+                    the row scrolls — a scroll container's own trailing padding
+                    is unreliable across browsers. The negative margin cancels
+                    the flex gap so the gutter is exactly 16px. Removed in the
+                    desktop grid. */}
+                <div aria-hidden className="-ml-3.5 w-4 shrink-0 lg:hidden" />
               </div>
             </section>
           ))

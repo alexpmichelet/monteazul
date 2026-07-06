@@ -258,10 +258,6 @@ export function SignupForm({
           </form>
         </CardContent>
       </Card>
-      <FieldDescription className="px-6 text-center">
-        Al continuar, aceptas nuestros <a href="#">Términos de servicio</a> y
-        nuestra <a href="#">Política de privacidad</a>.
-      </FieldDescription>
     </div>
   )
 }
