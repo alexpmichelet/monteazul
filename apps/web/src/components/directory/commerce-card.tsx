@@ -8,7 +8,9 @@ import { api } from "@packages/backend/convex/_generated/api";
 import { commerceStatus } from "@packages/backend/convex/lib/horario";
 
 import { PHOTO_PLACEHOLDER_GRADIENT } from "@/lib/commerce-media";
+import { whatsAppLink } from "@/lib/commerce-contact";
 import { StatusBadge } from "./status-badge";
+import { useWhatsAppContact } from "./use-whatsapp-contact";
 import { WhatsAppButton } from "./whatsapp-button";
 
 type Sections = FunctionReturnType<
@@ -21,9 +23,9 @@ export type DirectoryCommerce = DirectorySection["commerces"][number];
  * Commerce card of the directory list, faithful to the Claude Design prototype:
  * photo (or placeholder) with a real-time opening badge, name, sub-category,
  * horario status line, and a WhatsApp CTA. The whole card links to the public
- * detail page (`/negocio/<id>`). The favourite heart and the WhatsApp button
- * are present but INERT in this slice — they only stop the card navigation;
- * contact tracking and favourites are wired in later slices.
+ * detail page (`/negocio/<id>`). The WhatsApp button records a Contact WhatsApp
+ * (fire-and-forget) and opens `wa.me` without navigating the card; the
+ * favourite heart is still an inert placeholder wired in a later slice.
  */
 function CommerceCard({
   commerce,
@@ -37,6 +39,8 @@ function CommerceCard({
     : null;
   const secondary = commerce.subcategories?.[0] ?? commerce.category;
   const photo = commerce.photos[0];
+  const contactWhatsApp = useWhatsAppContact();
+  const waHref = whatsAppLink(commerce.whatsapp);
 
   return (
     <Link
@@ -91,7 +95,13 @@ function CommerceCard({
         <WhatsAppButton
           size="sm"
           aria-label={`Escribir por WhatsApp a ${commerce.name}`}
-          onClick={(event) => event.preventDefault()}
+          onClick={(event) => {
+            // Stop the card's Link navigation, record the Contact WhatsApp,
+            // then open wa.me in a new tab (contact prime sur la stat).
+            event.preventDefault();
+            contactWhatsApp({ commerceId: commerce._id, name: commerce.name });
+            window.open(waHref, "_blank", "noopener,noreferrer");
+          }}
           className="mt-2.5 h-9 w-full rounded-[9px] text-[12.5px]"
         />
       </div>

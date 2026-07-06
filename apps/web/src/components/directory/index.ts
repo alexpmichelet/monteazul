@@ -11,6 +11,10 @@ export {
 } from "./status-badge";
 export { SubcategoryPill } from "./subcategory-pill";
 export {
+  useWhatsAppContact,
+  type WhatsAppContactTarget,
+} from "./use-whatsapp-contact";
+export {
   WhatsAppButton,
   WhatsAppGlyph,
   type WhatsAppButtonProps,

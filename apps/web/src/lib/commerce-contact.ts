@@ -32,10 +32,10 @@ export function formatColombianPhone(whatsapp: string): string {
 }
 
 /**
- * Direct `wa.me` click-to-chat link with a prefilled message. PROVISIONAL for
- * this slice: contact tracking (recording the event server-side before the
- * redirect) lands in a later slice, so the detail CTA links straight to
- * WhatsApp for now.
+ * `wa.me` click-to-chat link with the prefilled message: country code 57 + the
+ * 10-digit number + the URL-encoded Spanish greeting. The list cards and the
+ * detail CTA record a Contact WhatsApp (see `useWhatsAppContact`) then send the
+ * visitor here — the redirect always happens, even if tracking fails.
  */
 export function whatsAppLink(
   whatsapp: string,

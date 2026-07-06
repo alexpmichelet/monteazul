@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { FunctionReturnType } from "convex/server";
@@ -8,6 +8,7 @@ import type { Id } from "@packages/backend/convex/_generated/dataModel";
 import { ConvexReactClientFake, renderWithConvex } from "@packages/test-utils";
 
 import { CommerceDetailScreen } from "./commerce-detail-screen";
+import { notifyWhatsAppRedirect } from "./whatsapp-toast";
 
 const back = vi.fn();
 vi.mock("next/navigation", () => ({
@@ -24,6 +25,15 @@ vi.mock("next/link", () => ({
     <a href={href}>{children}</a>
   ),
 }));
+vi.mock("./whatsapp-toast", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./whatsapp-toast")>();
+  return { ...actual, notifyWhatsAppRedirect: vi.fn() };
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  window.localStorage.clear();
+});
 
 type DetailCommerce = NonNullable<
   FunctionReturnType<typeof api.table.commerces.getPublicById>
@@ -49,13 +59,26 @@ function makeCommerce(
   };
 }
 
+type ClickArgs = { commerceId: string; visitorId: string };
+
 function renderDetail(result: DetailCommerce | null | undefined) {
+  const recorded: ClickArgs[] = [];
   const client = new ConvexReactClientFake();
   client.registerQueryFake(
     api.table.commerces.getPublicById,
     () => result as DetailCommerce | null,
   );
-  return renderWithConvex(<CommerceDetailScreen id="commerce_1" />, { client });
+  client.registerMutationFake(
+    api.table.events.recordWhatsAppClick,
+    (args) => {
+      recorded.push(args as ClickArgs);
+      return null;
+    },
+  );
+  const view = renderWithConvex(<CommerceDetailScreen id="commerce_1" />, {
+    client,
+  });
+  return { ...view, recorded };
 }
 
 describe("CommerceDetailScreen", () => {
@@ -106,12 +129,28 @@ describe("CommerceDetailScreen", () => {
     expect(ig.getAttribute("href")).toBe("https://instagram.com/sazon.abuela");
   });
 
-  it("renders a sticky WhatsApp CTA linking directly to wa.me", () => {
+  it("keeps the sticky WhatsApp CTA linking to wa.me (redirect works even if tracking fails)", () => {
     renderDetail(makeCommerce());
     const cta = screen.getByRole("link", { name: /Escribir por WhatsApp/ });
     expect(cta.getAttribute("href")).toBe(
       "https://wa.me/573182173887?text=Hola%2C%20te%20escribo%20desde%20el%20directorio%20de%20Monteazul",
     );
+  });
+
+  it("records a whatsapp_click and shows the toast when the CTA is clicked", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(window, "open").mockReturnValue(null);
+    const { recorded } = renderDetail(makeCommerce());
+
+    await user.click(
+      screen.getByRole("link", { name: /Escribir por WhatsApp/ }),
+    );
+
+    expect(recorded).toHaveLength(1);
+    expect(recorded[0].commerceId).toBe("commerce_1");
+    expect(typeof recorded[0].visitorId).toBe("string");
+    expect(recorded[0].visitorId.length).toBeGreaterThan(0);
+    expect(notifyWhatsAppRedirect).toHaveBeenCalledWith("Sazón de la Abuela");
   });
 
   it("does not render internal fields even if present in the data", () => {

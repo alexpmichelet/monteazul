@@ -20,6 +20,7 @@ import {
 import { PhotoCarousel } from "./photo-carousel";
 import { StatusBadge } from "./status-badge";
 import { SubcategoryPill } from "./subcategory-pill";
+import { useWhatsAppContact } from "./use-whatsapp-contact";
 import { WhatsAppGlyph } from "./whatsapp-button";
 
 /** The public projection of a Commerce returned by `getPublicById` (never null here). */
@@ -39,8 +40,9 @@ const SCREEN = "mx-auto min-h-screen max-w-[480px] bg-surface";
  * Fetches a single fiche by id from `getPublicById`, which only ever returns a
  * `publicado` Commerce with the internal fields (`resides`, `notas`, …) already
  * stripped: a `pendiente`/`suspendido` fiche or an unknown id yields `null`,
- * rendering the "no encontrado" state. The WhatsApp CTA is a PROVISIONAL direct
- * `wa.me` link — contact tracking lands in a later slice.
+ * rendering the "no encontrado" state. The WhatsApp CTA records a Contact
+ * WhatsApp Événement on click and stays a real `wa.me` anchor, so the redirect
+ * happens through the browser even if tracking fails (contact prime sur la stat).
  */
 export function CommerceDetailScreen({ id }: { id: string }) {
   const router = useRouter();
@@ -84,6 +86,7 @@ function DetailContent({
   const phone = formatColombianPhone(commerce.whatsapp);
   const waHref = whatsAppLink(commerce.whatsapp);
   const ig = commerce.instagram ? instagramLink(commerce.instagram) : null;
+  const contactWhatsApp = useWhatsAppContact();
 
   return (
     <div className={`${SCREEN} pb-24`}>
@@ -186,6 +189,9 @@ function DetailContent({
           href={waHref}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() =>
+            contactWhatsApp({ commerceId: commerce._id, name: commerce.name })
+          }
           className="flex w-full items-center justify-center gap-2.5 rounded-[13px] bg-whatsapp py-[15px] text-[15px] font-bold text-whatsapp-foreground"
         >
           <WhatsAppGlyph className="size-5" />

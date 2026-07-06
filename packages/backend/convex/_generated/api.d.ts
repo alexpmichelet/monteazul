@@ -25,6 +25,7 @@ import type * as storage from "../storage.js";
 import type * as table_admin from "../table/admin.js";
 import type * as table_adminInvites from "../table/adminInvites.js";
 import type * as table_commerces from "../table/commerces.js";
+import type * as table_events from "../table/events.js";
 import type * as table_feedback from "../table/feedback.js";
 import type * as table_users from "../table/users.js";
 import type * as utils_generateFunctions from "../utils/generateFunctions.js";
@@ -53,6 +54,7 @@ declare const fullApi: ApiFromModules<{
   "table/admin": typeof table_admin;
   "table/adminInvites": typeof table_adminInvites;
   "table/commerces": typeof table_commerces;
+  "table/events": typeof table_events;
   "table/feedback": typeof table_feedback;
   "table/users": typeof table_users;
   "utils/generateFunctions": typeof utils_generateFunctions;
