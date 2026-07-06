@@ -36,3 +36,9 @@ Format par entrée :
 - [ ] **Recherche insensible aux accents/casse** — Précondition : annuaire seedé avec « Panadería El Trigal » (publicado). Action : taper `panaderia` (sans accent) dans la barre de recherche. Résultat : la fiche « Panadería El Trigal » apparaît dans les résultats.
 - [ ] **Recherche combinée au chip catégorie** — Précondition : deux fiches publicado contenant le mot « artesanal », l'une en « Hogar y artesanías », l'autre en « Comida y bebida ». Action : sélectionner le chip « Hogar » puis taper `artesanal`. Résultat : seule la fiche « Hogar y artesanías » s'affiche.
 - [ ] **État « Sin resultados » + effacement** — Précondition : annuaire chargé. Action : taper `zzzzz` (aucune correspondance). Résultat : l'écran affiche « Sin resultados » / « No encontramos negocios para «zzzzz». Prueba otra búsqueda o categoría. » ; cliquer le bouton d'effacement (X) de la barre restaure la liste complète.
+
+## #6 — Fiche détail publique du commerce
+
+- [ ] **Navigation liste → détail → retour** : depuis l'accueil, cliquer une carte d'un commerce publié → la fiche `/negocio/<id>` s'affiche (carrousel, badge, horaire, contact) → le bouton retour flottant ramène à la liste.
+- [ ] **Fiche non publiée par URL directe → non trouvé** : ouvrir directement l'URL d'une fiche `pendiente` ou `suspendido` → page « Negocio no encontrado » avec lien « Volver al directorio » (jamais le contenu de la fiche).
+- [ ] **Contact & réseaux** : sur une fiche publiée, le téléphone s'affiche « +57 318 217 3887 », le lien Instagram ouvre le profil, et « Escribir por WhatsApp » ouvre `wa.me/57…` avec le message pré-rempli.
