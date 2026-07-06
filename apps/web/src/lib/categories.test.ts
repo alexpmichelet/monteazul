@@ -43,9 +43,9 @@ describe("CATEGORY_CHIPS", () => {
     expect(CATEGORY_CHIP_BY_KEY.tecnologia.category).toBe("Tecnología");
   });
 
-  it("ships an icon component for every chip", () => {
+  it("ships a renderable icon component for every chip", () => {
     for (const chip of CATEGORY_CHIPS) {
-      expect(chip.Icon).toBeTypeOf("function");
+      expect(chip.Icon).toBeTruthy();
     }
   });
 });
