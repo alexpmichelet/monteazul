@@ -10,4 +10,14 @@ pnpm typecheck && pnpm lint && pnpm test
 
 ## Agent skills
 
-Run `/setup-matt-pocock-skills` before first use of `to-issues`, `triage`, or `work-next-agent-issue`.
+### Issue tracker
+
+Issues live in GitHub Issues (`alexpmichelet/monteazul`), managed via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five canonical triage labels are used as-is (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Multi-context: `CONTEXT-MAP.md` at the root points to per-package `CONTEXT.md` files. See `docs/agents/domain.md`.
