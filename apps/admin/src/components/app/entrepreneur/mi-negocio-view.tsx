@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useMutation, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
-import { Controller, useForm, useWatch } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
@@ -20,20 +20,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@/components/ui/native-select";
+import { FieldGroup } from "@/components/ui/field";
 import { Spinner } from "@/components/ui/spinner";
 import { getConvexErrorMessage } from "@/utils/getConvexErrorMessage";
 import {
@@ -42,6 +29,12 @@ import {
   validateHorario,
   type Horario,
 } from "@/components/app/entrepreneur/horario-editor";
+import {
+  CommerceBasicsFields,
+  CommerceContactFields,
+  CommerceLocationFields,
+} from "@/components/app/commerces/commerce-fields";
+import { SectionTitle } from "@/components/app/commerces/section-title";
 import { PhotoManager } from "@/components/app/entrepreneur/photo-manager";
 import { SuspenderReactivarButton } from "@/components/app/entrepreneur/suspender-reactivar-button";
 
@@ -101,38 +94,14 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-/** A card title with a coloured icon chip, so each section reads at a glance. */
-function SectionTitle({
-  icon: Icon,
-  accent,
-  children,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  accent: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <CardTitle className="flex items-center gap-2.5">
-      <span
-        className={cn(
-          "flex size-8 items-center justify-center rounded-lg",
-          accent,
-        )}
-      >
-        <Icon className="size-4" />
-      </span>
-      {children}
-    </CardTitle>
-  );
-}
-
 /**
  * « Mi negocio » — the Entrepreneur's self-service screen for the fiche they
  * own. The edit form is split into scannable sections (Información básica,
- * Contacto, Horario, Ubicación y detalles), each in its own card, with a single
- * persistent "Guardar cambios" action at the bottom. All edits go through
- * `updateMyCommerce` with the SAME validations as submission (and never re-open
- * approval). Everything in Spanish.
+ * Contacto, Horario, Ubicación y detalles) built from the shared
+ * `Commerce*Fields` groups (same design as the fiche wizard), each in its own
+ * card, with a single persistent "Guardar cambios" action at the bottom. All
+ * edits go through `updateMyCommerce` with the SAME validations as submission
+ * (and never re-open approval). Everything in Spanish.
  */
 export function MiNegocioView({ commerce }: { commerce: Commerce }) {
   const options = useQuery(api.table.commerces.getFormOptions);
@@ -264,100 +233,21 @@ export function MiNegocioView({ commerce }: { commerce: Commerce }) {
         {/* Información básica */}
         <Card>
           <CardHeader>
-            <SectionTitle icon={IconInfoCircle} accent="bg-blue-100 text-blue-700">
+            <SectionTitle
+              icon={IconInfoCircle}
+              accent="bg-blue-100 text-blue-700"
+            >
               Información básica
             </SectionTitle>
           </CardHeader>
           <CardContent>
             <FieldGroup>
-              <Controller
-                name="name"
+              <CommerceBasicsFields
                 control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="name">Nombre del negocio</FieldLabel>
-                    <Input
-                      {...field}
-                      id="name"
-                      aria-invalid={fieldState.invalid}
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-
-              <Controller
-                name="category"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="category">Categoría</FieldLabel>
-                    <NativeSelect
-                      {...field}
-                      id="category"
-                      aria-invalid={fieldState.invalid}
-                      className="w-full"
-                    >
-                      <NativeSelectOption value="">
-                        Selecciona una categoría
-                      </NativeSelectOption>
-                      {options.categories.map((cat) => (
-                        <NativeSelectOption key={cat} value={cat}>
-                          {cat}
-                        </NativeSelectOption>
-                      ))}
-                    </NativeSelect>
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-
-              {isComida && (
-                <Field>
-                  <FieldLabel>Subcategorías</FieldLabel>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {options.comidaSubcategories.map((sub) => {
-                      const id = `sub-${sub}`;
-                      return (
-                        <div key={sub} className="flex items-center gap-2">
-                          <Checkbox
-                            id={id}
-                            checked={subcategories.includes(sub)}
-                            onCheckedChange={(checked) =>
-                              toggleSubcategory(sub, checked === true)
-                            }
-                          />
-                          <Label htmlFor={id} className="font-normal">
-                            {sub}
-                          </Label>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </Field>
-              )}
-
-              <Controller
-                name="description"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="description">Descripción</FieldLabel>
-                    <Textarea
-                      {...field}
-                      id="description"
-                      aria-invalid={fieldState.invalid}
-                      rows={3}
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
+                options={options}
+                isComida={isComida}
+                subcategories={subcategories}
+                onToggleSubcategory={toggleSubcategory}
               />
             </FieldGroup>
           </CardContent>
@@ -366,59 +256,16 @@ export function MiNegocioView({ commerce }: { commerce: Commerce }) {
         {/* Contacto */}
         <Card>
           <CardHeader>
-            <SectionTitle icon={IconPhone} accent="bg-emerald-100 text-emerald-700">
+            <SectionTitle
+              icon={IconPhone}
+              accent="bg-emerald-100 text-emerald-700"
+            >
               Contacto
             </SectionTitle>
           </CardHeader>
           <CardContent>
             <FieldGroup>
-              <Controller
-                name="whatsapp"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="whatsapp">WhatsApp</FieldLabel>
-                    <Input
-                      {...field}
-                      id="whatsapp"
-                      inputMode="numeric"
-                      placeholder="3182173887"
-                      aria-invalid={fieldState.invalid}
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-
-              <Controller
-                name="instagram"
-                control={form.control}
-                render={({ field }) => (
-                  <Field>
-                    <FieldLabel htmlFor="instagram">Instagram</FieldLabel>
-                    <Input
-                      {...field}
-                      id="instagram"
-                      placeholder="https://instagram.com/…"
-                    />
-                  </Field>
-                )}
-              />
-
-              <Controller
-                name="contactName"
-                control={form.control}
-                render={({ field }) => (
-                  <Field>
-                    <FieldLabel htmlFor="contactName">
-                      Nombre de contacto
-                    </FieldLabel>
-                    <Input {...field} id="contactName" />
-                  </Field>
-                )}
-              />
+              <CommerceContactFields control={form.control} />
             </FieldGroup>
           </CardContent>
         </Card>
@@ -426,7 +273,10 @@ export function MiNegocioView({ commerce }: { commerce: Commerce }) {
         {/* Horario */}
         <Card>
           <CardHeader>
-            <SectionTitle icon={IconClock} accent="bg-violet-100 text-violet-700">
+            <SectionTitle
+              icon={IconClock}
+              accent="bg-violet-100 text-violet-700"
+            >
               Horario
             </SectionTitle>
           </CardHeader>
@@ -448,62 +298,9 @@ export function MiNegocioView({ commerce }: { commerce: Commerce }) {
           </CardHeader>
           <CardContent>
             <FieldGroup>
-              <Controller
-                name="torreApto"
+              <CommerceLocationFields
                 control={form.control}
-                render={({ field }) => (
-                  <Field>
-                    <FieldLabel htmlFor="torreApto">
-                      Torre y apartamento
-                    </FieldLabel>
-                    <Input
-                      {...field}
-                      id="torreApto"
-                      placeholder="Torre 4 · Apto 926"
-                    />
-                  </Field>
-                )}
-              />
-
-              <Controller
-                name="resides"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="resides">
-                      ¿Resides en Monteazul?
-                    </FieldLabel>
-                    <NativeSelect
-                      {...field}
-                      id="resides"
-                      aria-invalid={fieldState.invalid}
-                      className="w-full"
-                    >
-                      <NativeSelectOption value="">
-                        Selecciona una opción
-                      </NativeSelectOption>
-                      {options.residesValues.map((value) => (
-                        <NativeSelectOption key={value} value={value}>
-                          {value}
-                        </NativeSelectOption>
-                      ))}
-                    </NativeSelect>
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-
-              <Controller
-                name="notas"
-                control={form.control}
-                render={({ field }) => (
-                  <Field>
-                    <FieldLabel htmlFor="notas">Notas</FieldLabel>
-                    <Textarea {...field} id="notas" rows={2} />
-                  </Field>
-                )}
+                options={options}
               />
             </FieldGroup>
           </CardContent>

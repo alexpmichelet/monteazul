@@ -24,14 +24,16 @@ import {
 
 /**
  * The shared fiche fields — the single source of the Commerce form markup used
- * identically by the entrepreneur submission (`FicheWizard`), the admin edit
- * (`CommerceEditForm`) and the admin seeded-account creation
- * (`CreateEntrepriseForm`). Extracting them keeps the fields and their labels in
- * one place, so the three surfaces can never drift.
+ * identically by the entrepreneur submission (`FicheWizard`), the entrepreneur
+ * edit (`MiNegocioView`), the admin edit (`CommerceEditForm`) and the admin
+ * seeded-account creation (`CreateEntrepriseForm`). Extracting them keeps the
+ * fields and their labels in one place, so the surfaces can never drift.
  *
- * Renders a fragment (no wrapping `FieldGroup`) so each form can compose it with
- * its own extra fields (e.g. the merchant email) and submit button. The
- * business-rule validation itself lives in the backend
+ * The fields come in three groups matching the sectioned card design
+ * (`CommerceBasicsFields`, `CommerceContactFields`, `CommerceLocationFields`)
+ * plus the `HorarioEditor`; sectioned forms compose the groups into their own
+ * cards, while `CommerceFields` renders them flat for the single-card admin
+ * forms. Business-rule validation itself lives in the backend
  * (`lib/commerce.assertValidCommerceForm`) and is reused there too.
  */
 
@@ -51,28 +53,19 @@ type FormOptions = FunctionReturnType<
   typeof api.table.commerces.getFormOptions
 >;
 
-export function CommerceFields({
+/** « Información básica » — name, category (+ Comida sub-categories), description. */
+export function CommerceBasicsFields({
   control,
   options,
   isComida,
   subcategories,
   onToggleSubcategory,
-  horario,
-  onHorarioChange,
-  horarioError,
-  residesLabel = "¿Resides en Monteazul?",
-  notasLabel = "Notas",
 }: {
   control: Control<CommerceFieldsValues>;
   options: FormOptions;
   isComida: boolean;
   subcategories: string[];
   onToggleSubcategory: (value: string, checked: boolean) => void;
-  horario: Horario;
-  onHorarioChange: (next: Horario) => void;
-  horarioError: string | null;
-  residesLabel?: string;
-  notasLabel?: string;
 }) {
   return (
     <>
@@ -155,7 +148,18 @@ export function CommerceFields({
           </Field>
         )}
       />
+    </>
+  );
+}
 
+/** « Contacto » — WhatsApp, Instagram, contact name. */
+export function CommerceContactFields({
+  control,
+}: {
+  control: Control<CommerceFieldsValues>;
+}) {
+  return (
+    <>
       <Controller
         name="whatsapp"
         control={control}
@@ -170,23 +174,6 @@ export function CommerceFields({
               aria-invalid={fieldState.invalid}
             />
             {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-          </Field>
-        )}
-      />
-
-      <HorarioEditor
-        value={horario}
-        onChange={onHorarioChange}
-        error={horarioError}
-      />
-
-      <Controller
-        name="torreApto"
-        control={control}
-        render={({ field }) => (
-          <Field>
-            <FieldLabel htmlFor="torreApto">Torre y apartamento</FieldLabel>
-            <Input {...field} id="torreApto" placeholder="Torre 4 · Apto 926" />
           </Field>
         )}
       />
@@ -213,6 +200,34 @@ export function CommerceFields({
           <Field>
             <FieldLabel htmlFor="contactName">Nombre de contacto</FieldLabel>
             <Input {...field} id="contactName" />
+          </Field>
+        )}
+      />
+    </>
+  );
+}
+
+/** « Ubicación y detalles » — torre/apto, resides, internal notes. */
+export function CommerceLocationFields({
+  control,
+  options,
+  residesLabel = "¿Resides en Monteazul?",
+  notasLabel = "Notas",
+}: {
+  control: Control<CommerceFieldsValues>;
+  options: FormOptions;
+  residesLabel?: string;
+  notasLabel?: string;
+}) {
+  return (
+    <>
+      <Controller
+        name="torreApto"
+        control={control}
+        render={({ field }) => (
+          <Field>
+            <FieldLabel htmlFor="torreApto">Torre y apartamento</FieldLabel>
+            <Input {...field} id="torreApto" placeholder="Torre 4 · Apto 926" />
           </Field>
         )}
       />
@@ -252,6 +267,58 @@ export function CommerceFields({
             <Textarea {...field} id="notas" rows={2} />
           </Field>
         )}
+      />
+    </>
+  );
+}
+
+/** The flat composition — all fiche fields in one column, for the admin forms. */
+export function CommerceFields({
+  control,
+  options,
+  isComida,
+  subcategories,
+  onToggleSubcategory,
+  horario,
+  onHorarioChange,
+  horarioError,
+  residesLabel,
+  notasLabel,
+}: {
+  control: Control<CommerceFieldsValues>;
+  options: FormOptions;
+  isComida: boolean;
+  subcategories: string[];
+  onToggleSubcategory: (value: string, checked: boolean) => void;
+  horario: Horario;
+  onHorarioChange: (next: Horario) => void;
+  horarioError: string | null;
+  residesLabel?: string;
+  notasLabel?: string;
+}) {
+  return (
+    <>
+      <CommerceBasicsFields
+        control={control}
+        options={options}
+        isComida={isComida}
+        subcategories={subcategories}
+        onToggleSubcategory={onToggleSubcategory}
+      />
+
+      <CommerceContactFields control={control} />
+
+      <HorarioEditor
+        value={horario}
+        onChange={onHorarioChange}
+        error={horarioError}
+      />
+
+      <CommerceLocationFields
+        control={control}
+        options={options}
+        residesLabel={residesLabel}
+        notasLabel={notasLabel}
       />
     </>
   );
