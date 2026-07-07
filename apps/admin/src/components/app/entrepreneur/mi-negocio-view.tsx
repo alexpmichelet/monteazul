@@ -307,23 +307,6 @@ export function MiNegocioView({ commerce }: { commerce: Commerce }) {
           </CardContent>
         </Card>
 
-        {formError && (
-          <div className="text-destructive text-sm lg:col-span-2">
-            {formError}
-          </div>
-        )}
-
-        {/* Persistent save bar — stays reachable at the bottom of the long form. */}
-        <div className="bg-background/80 sticky bottom-0 -mx-1 flex justify-end rounded-lg border p-3 backdrop-blur supports-[backdrop-filter]:bg-background/60 lg:col-span-2">
-          <Button
-            type="submit"
-            form="form-mi-negocio"
-            size="lg"
-            disabled={isLoading}
-          >
-            {isLoading ? <Spinner /> : "Guardar cambios"}
-          </Button>
-        </div>
       </form>
 
       {/* Fotos */}
@@ -337,6 +320,21 @@ export function MiNegocioView({ commerce }: { commerce: Commerce }) {
           <PhotoManager commerce={commerce} />
         </CardContent>
       </Card>
+
+      {/* Guardar — at the very bottom of the page (submits the form above). */}
+      <div className="flex flex-col items-end gap-2">
+        {formError && (
+          <div className="text-destructive text-sm">{formError}</div>
+        )}
+        <Button
+          type="submit"
+          form="form-mi-negocio"
+          size="lg"
+          disabled={isLoading}
+        >
+          {isLoading ? <Spinner /> : "Guardar cambios"}
+        </Button>
+      </div>
     </div>
   );
 }
