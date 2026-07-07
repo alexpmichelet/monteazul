@@ -18,7 +18,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import {
   PERIOD_OPTIONS,
-  type StatsGranularity,
+  type StatsPeriod,
 } from "@/components/app/entrepreneur/granularity";
 import { StatsEvolutionChart } from "@/components/app/entrepreneur/stats-evolution-chart";
 import { StatCard } from "@/components/app/stats/stat-card";
@@ -35,10 +35,10 @@ export function EstadisticasView({
 }: {
   commerceId: Id<"commerces">;
 }) {
-  const [granularity, setGranularity] = React.useState<StatsGranularity>("day");
+  const [period, setPeriod] = React.useState<StatsPeriod>("week");
   const stats = useQuery(api.table.events.statsForCommerce, {
     commerceId,
-    granularity,
+    period,
   });
 
   return (
@@ -81,7 +81,7 @@ export function EstadisticasView({
             className="flex items-center gap-1"
           >
             {PERIOD_OPTIONS.map((option) => {
-              const active = option.value === granularity;
+              const active = option.value === period;
               return (
                 <Button
                   key={option.value}
@@ -89,7 +89,7 @@ export function EstadisticasView({
                   size="sm"
                   variant={active ? "default" : "outline"}
                   aria-pressed={active}
-                  onClick={() => setGranularity(option.value)}
+                  onClick={() => setPeriod(option.value)}
                 >
                   {option.label}
                 </Button>
@@ -112,10 +112,7 @@ export function EstadisticasView({
               Aún no hay datos para mostrar.
             </div>
           ) : (
-            <StatsEvolutionChart
-              series={stats.series}
-              granularity={granularity}
-            />
+            <StatsEvolutionChart series={stats.series} period={period} />
           )}
         </CardContent>
       </Card>

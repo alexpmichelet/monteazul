@@ -3,6 +3,7 @@ import {
   aggregateEvents,
   aggregateGlobalStats,
   bogotaBucketKey,
+  evolutionSeries,
   type GlobalAggregatableEvent,
 } from "./stats";
 
@@ -23,6 +24,7 @@ const JUL5_2350 = Date.UTC(2026, 6, 6, 4, 50); //    2026-07-05 23:50 Bogota (Su
 const JUL6_0010 = Date.UTC(2026, 6, 6, 5, 10); //    2026-07-06 00:10 Bogota (Mon)
 const JUL31_2330 = Date.UTC(2026, 7, 1, 4, 30); //   2026-07-31 23:30 Bogota (Fri)
 const AUG1_0000 = Date.UTC(2026, 7, 1, 5, 0); //     2026-08-01 00:00 Bogota (Sat)
+const JUN15_11H = Date.UTC(2026, 5, 15, 16, 0); //   2026-06-15 11:00 Bogota
 
 describe("bogotaBucketKey", () => {
   test("day bucket is the America/Bogota calendar day (YYYY-MM-DD)", () => {
@@ -126,6 +128,84 @@ describe("aggregateEvents", () => {
     expect(series).toEqual([
       { bucket: "2026-07", visits: 1, whatsappContacts: 0 },
       { bucket: "2026-08", visits: 0, whatsappContacts: 1 },
+    ]);
+  });
+});
+
+/**
+ * The gap-filled evolution series backing the Estadísticas period selector.
+ * `nowMs` is injected so these assertions are deterministic (the query passes
+ * `Date.now()`). "Esta semana"/"Este mes" are daily ranges ending today; "Todo"
+ * is monthly from the earliest event. Every bucket in range is emitted, zeros
+ * included — that is what makes the chart draw a real curve.
+ */
+describe("evolutionSeries", () => {
+  test("week: 7 gap-filled daily buckets ending today, zeros included", () => {
+    const series = evolutionSeries(
+      [
+        { type: "visit", timestamp: JUL5_2330 }, // 2026-07-05
+        { type: "visit", timestamp: JUL6_11H }, // 2026-07-06
+        { type: "whatsapp_click", timestamp: JUL6_11H }, // 2026-07-06
+      ],
+      "week",
+      JUL6_11H, // now = 2026-07-06 11:00 Bogota
+    );
+    expect(series).toEqual([
+      { bucket: "2026-06-30", visits: 0, whatsappContacts: 0 },
+      { bucket: "2026-07-01", visits: 0, whatsappContacts: 0 },
+      { bucket: "2026-07-02", visits: 0, whatsappContacts: 0 },
+      { bucket: "2026-07-03", visits: 0, whatsappContacts: 0 },
+      { bucket: "2026-07-04", visits: 0, whatsappContacts: 0 },
+      { bucket: "2026-07-05", visits: 1, whatsappContacts: 0 },
+      { bucket: "2026-07-06", visits: 1, whatsappContacts: 1 },
+    ]);
+  });
+
+  test("week: no events → 7 zero buckets (still a full range, not empty)", () => {
+    const series = evolutionSeries([], "week", JUL6_11H);
+    expect(series).toHaveLength(7);
+    expect(series.every((p) => p.visits === 0 && p.whatsappContacts === 0)).toBe(
+      true,
+    );
+    expect(series[0].bucket).toBe("2026-06-30");
+    expect(series[6].bucket).toBe("2026-07-06");
+  });
+
+  test("month: 30 gap-filled daily buckets ending today", () => {
+    const series = evolutionSeries(
+      [{ type: "visit", timestamp: JUL6_11H }],
+      "month",
+      JUL6_11H,
+    );
+    expect(series).toHaveLength(30);
+    expect(series[0].bucket).toBe("2026-06-07");
+    expect(series[29].bucket).toBe("2026-07-06");
+    expect(series[29]).toEqual({
+      bucket: "2026-07-06",
+      visits: 1,
+      whatsappContacts: 0,
+    });
+  });
+
+  test("all: monthly buckets from the earliest event to now, gap-filled", () => {
+    const series = evolutionSeries(
+      [
+        { type: "visit", timestamp: JUN15_11H }, // 2026-06
+        { type: "whatsapp_click", timestamp: JUL6_11H }, // 2026-07
+      ],
+      "all",
+      JUL6_11H,
+    );
+    expect(series).toEqual([
+      { bucket: "2026-06", visits: 1, whatsappContacts: 0 },
+      { bucket: "2026-07", visits: 0, whatsappContacts: 1 },
+    ]);
+  });
+
+  test("all: no events → a single bucket for the current month", () => {
+    const series = evolutionSeries([], "all", JUL6_11H);
+    expect(series).toEqual([
+      { bucket: "2026-07", visits: 0, whatsappContacts: 0 },
     ]);
   });
 });

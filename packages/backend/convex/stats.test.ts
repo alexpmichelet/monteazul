@@ -92,7 +92,7 @@ describe("statsForCommerce — ownership guard", () => {
         .withIdentity({ subject: intruder })
         .query(api.table.events.statsForCommerce, {
           commerceId,
-          granularity: "day",
+          period: "all",
         }),
     ).rejects.toThrow();
   });
@@ -108,20 +108,20 @@ describe("statsForCommerce — ownership guard", () => {
         .withIdentity({ subject: client })
         .query(api.table.events.statsForCommerce, {
           commerceId,
-          granularity: "day",
+          period: "all",
         }),
     ).rejects.toThrow();
     await expect(
       t.query(api.table.events.statsForCommerce, {
         commerceId,
-        granularity: "day",
+        period: "all",
       }),
     ).rejects.toThrow();
   });
 });
 
 describe("statsForCommerce — aggregation", () => {
-  test("the owner reads totals and a day series of their own events", async () => {
+  test("the owner reads all-time totals and a series covering their own events", async () => {
     const t = convexTest(schema, modules);
     const owner = await insertOwner(t, "owner@example.com");
     const commerceId = await insertCommerce(t, owner);
@@ -134,14 +134,19 @@ describe("statsForCommerce — aggregation", () => {
       .withIdentity({ subject: owner })
       .query(api.table.events.statsForCommerce, {
         commerceId,
-        granularity: "day",
+        period: "all",
       });
 
+    // Totals are all-time and deterministic. With the "all" period the series
+    // is monthly and gap-filled up to the current month, so we assert the
+    // data's own month is present (exact gap-fill length is time-dependent —
+    // the day/week bucketing is pinned deterministically in lib/stats.test.ts).
     expect(stats.totals).toEqual({ visits: 2, whatsappContacts: 1 });
-    expect(stats.series).toEqual([
-      { bucket: "2026-07-05", visits: 1, whatsappContacts: 0 },
-      { bucket: "2026-07-06", visits: 1, whatsappContacts: 1 },
-    ]);
+    expect(stats.series).toContainEqual({
+      bucket: "2026-07",
+      visits: 2,
+      whatsappContacts: 1,
+    });
   });
 
   test("stats are scoped to the queried fiche — another fiche's events are excluded", async () => {
@@ -160,7 +165,7 @@ describe("statsForCommerce — aggregation", () => {
       .withIdentity({ subject: owner })
       .query(api.table.events.statsForCommerce, {
         commerceId: mine,
-        granularity: "day",
+        period: "all",
       });
 
     expect(stats.totals).toEqual({ visits: 1, whatsappContacts: 0 });

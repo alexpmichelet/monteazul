@@ -1,7 +1,7 @@
 import { query } from "../_generated/server";
-import { aggregateGlobalStats } from "../lib/stats";
+import { aggregateGlobalStats, evolutionSeries } from "../lib/stats";
 import { requireAdmin } from "../rbac";
-import { statsGranularityValidator } from "./events";
+import { statsPeriodValidator } from "./events";
 
 /**
  * Site-wide statistics for the Super admin (story #15) — the back-office
@@ -13,12 +13,13 @@ import { statsGranularityValidator } from "./events";
  *
  * Adds two admin-only views: the count of Commerces per Estado, and the
  * WhatsApp-contacts leaderboard (the monetisation pitch — which fiches get
- * contacted the most). The period selector (day/week/month) re-buckets the
- * evolution series only; totals and ranking span the whole journal.
+ * contacted the most). The period selector ("Esta semana" / "Este mes" / "Todo")
+ * range-scopes the gap-filled evolution series only; totals, ranking and estado
+ * breakdown span the whole journal.
  */
 export const globalStats = query({
   args: {
-    granularity: statsGranularityValidator,
+    period: statsPeriodValidator,
   },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
@@ -26,18 +27,32 @@ export const globalStats = query({
     const commerces = await ctx.db.query("commerces").collect();
     const events = await ctx.db.query("events").collect();
 
-    return aggregateGlobalStats(
+    const mappedEvents = events.map((event) => ({
+      type: event.type,
+      timestamp: event.timestamp,
+      commerceId: event.commerceId,
+    }));
+
+    // Totals / ranking / estado breakdown are all-time (the granularity passed
+    // here only shapes a series we discard); the displayed series is the
+    // gap-filled, range-scoped one.
+    const base = aggregateGlobalStats(
       commerces.map((commerce) => ({
         commerceId: commerce._id,
         name: commerce.name,
         estado: commerce.estado,
       })),
-      events.map((event) => ({
-        type: event.type,
-        timestamp: event.timestamp,
-        commerceId: event.commerceId,
-      })),
-      args.granularity,
+      mappedEvents,
+      "month",
     );
+
+    return {
+      ...base,
+      series: evolutionSeries(
+        mappedEvents.map((e) => ({ type: e.type, timestamp: e.timestamp })),
+        args.period,
+        Date.now(),
+      ),
+    };
   },
 });

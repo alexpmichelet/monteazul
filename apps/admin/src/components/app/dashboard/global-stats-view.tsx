@@ -33,7 +33,7 @@ import {
 } from "@/components/app/commerces/estado-badge";
 import {
   PERIOD_OPTIONS,
-  type StatsGranularity,
+  type StatsPeriod,
 } from "@/components/app/entrepreneur/granularity";
 import { StatsEvolutionChart } from "@/components/app/entrepreneur/stats-evolution-chart";
 import { StatCard } from "@/components/app/stats/stat-card";
@@ -42,7 +42,8 @@ import { StatCard } from "@/components/app/stats/stat-card";
  * « Estadísticas globales » — the Super admin's site-wide dashboard (story #15).
  * Reserved to the `admin` role (the page lives under the AdminGuard). Shows the
  * site totals (Visitas, Contactos por WhatsApp), the number of Commerces per
- * Estado, the global evolution chart with a day/week/month period selector, and
+ * Estado, the global evolution chart with a period selector (Esta semana /
+ * Este mes / Todo), and
  * the ranking of Commerces by Contactos por WhatsApp — the monetisation pitch.
  * Every number is aggregated AT READ from the Événement journal by
  * `globalStats`, reusing the same module as the entrepreneur Estadísticas, so
@@ -50,8 +51,8 @@ import { StatCard } from "@/components/app/stats/stat-card";
  * in Spanish.
  */
 export function GlobalStatsView() {
-  const [granularity, setGranularity] = React.useState<StatsGranularity>("day");
-  const stats = useQuery(api.table.adminStats.globalStats, { granularity });
+  const [period, setPeriod] = React.useState<StatsPeriod>("week");
+  const stats = useQuery(api.table.adminStats.globalStats, { period });
 
   const estadoBreakdown = stats?.estadoBreakdown ?? [];
   const ranking = stats?.ranking ?? [];
@@ -122,7 +123,7 @@ export function GlobalStatsView() {
             className="flex items-center gap-1"
           >
             {PERIOD_OPTIONS.map((option) => {
-              const active = option.value === granularity;
+              const active = option.value === period;
               return (
                 <Button
                   key={option.value}
@@ -130,7 +131,7 @@ export function GlobalStatsView() {
                   size="sm"
                   variant={active ? "default" : "outline"}
                   aria-pressed={active}
-                  onClick={() => setGranularity(option.value)}
+                  onClick={() => setPeriod(option.value)}
                 >
                   {option.label}
                 </Button>
@@ -153,10 +154,7 @@ export function GlobalStatsView() {
               Aún no hay datos para mostrar.
             </div>
           ) : (
-            <StatsEvolutionChart
-              series={stats.series}
-              granularity={granularity}
-            />
+            <StatsEvolutionChart series={stats.series} period={period} />
           )}
         </CardContent>
       </Card>

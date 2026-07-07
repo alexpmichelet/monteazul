@@ -10,7 +10,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import type { StatsGranularity } from "./granularity";
+import type { StatsPeriod } from "./granularity";
 import { formatBucketLabel } from "./granularity";
 
 type SeriesPoint = {
@@ -38,10 +38,10 @@ const chartConfig = {
  */
 export function StatsEvolutionChart({
   series,
-  granularity,
+  period,
 }: {
   series: SeriesPoint[];
-  granularity: StatsGranularity;
+  period: StatsPeriod;
 }) {
   return (
     <ChartContainer config={chartConfig} className="aspect-auto h-[260px] w-full">
@@ -71,7 +71,7 @@ export function StatsEvolutionChart({
           axisLine={false}
           tickMargin={8}
           minTickGap={24}
-          tickFormatter={(value) => formatBucketLabel(String(value), granularity)}
+          tickFormatter={(value) => formatBucketLabel(String(value), period)}
         />
         <YAxis
           tickLine={false}
@@ -84,7 +84,7 @@ export function StatsEvolutionChart({
           content={
             <ChartTooltipContent
               labelFormatter={(value) =>
-                formatBucketLabel(String(value), granularity)
+                formatBucketLabel(String(value), period)
               }
               indicator="dot"
             />

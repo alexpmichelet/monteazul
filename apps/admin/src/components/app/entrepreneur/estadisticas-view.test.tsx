@@ -31,11 +31,11 @@ describe("EstadisticasView", () => {
     expect(screen.getByTestId("stat-whatsapp-value").textContent).toBe("7");
   });
 
-  it("re-queries with the chosen granularity when the period selector changes", async () => {
+  it("re-queries with the chosen period when the selector changes", async () => {
     const client = new ConvexReactClientFake();
-    const statsFake = vi.fn((args: { granularity: string }) => ({
+    const statsFake = vi.fn((args: { period: string }) => ({
       totals:
-        args.granularity === "week"
+        args.period === "month"
           ? { visits: 5, whatsappContacts: 2 }
           : { visits: 42, whatsappContacts: 7 },
       series: [],
@@ -44,16 +44,16 @@ describe("EstadisticasView", () => {
 
     renderWithConvex(<EstadisticasView commerceId={commerceId} />, { client });
 
-    // Defaults to the day granularity.
-    expect(statsFake).toHaveBeenCalledWith({ commerceId, granularity: "day" });
+    // Defaults to "Esta semana".
+    expect(statsFake).toHaveBeenCalledWith({ commerceId, period: "week" });
     expect(screen.getByTestId("stat-visitas-value").textContent).toBe("42");
 
-    fireEvent.click(screen.getByRole("button", { name: "Semana" }));
+    fireEvent.click(screen.getByRole("button", { name: "Este mes" }));
 
     await waitFor(() =>
       expect(statsFake).toHaveBeenCalledWith({
         commerceId,
-        granularity: "week",
+        period: "month",
       }),
     );
     await waitFor(() =>
@@ -71,9 +71,9 @@ describe("EstadisticasView", () => {
     renderWithConvex(<EstadisticasView commerceId={commerceId} />, { client });
 
     expect(screen.getByTestId("evolution-chart")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Día" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Semana" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Mes" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Esta semana" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Este mes" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Todo" })).toBeTruthy();
   });
 
   it("shows an empty state when there are no data points", () => {
