@@ -99,22 +99,22 @@ describe("globalStats access guard", () => {
     const admin = await makeUser(t, "a@example.com", "admin");
 
     await expect(
-      t.query(api.table.adminStats.globalStats, { granularity: "day" }),
+      t.query(api.table.adminStats.globalStats, { period: "all" }),
     ).rejects.toThrow();
     await expect(
       t
         .withIdentity({ subject: user })
-        .query(api.table.adminStats.globalStats, { granularity: "day" }),
+        .query(api.table.adminStats.globalStats, { period: "all" }),
     ).rejects.toThrow();
     await expect(
       t
         .withIdentity({ subject: entre })
-        .query(api.table.adminStats.globalStats, { granularity: "day" }),
+        .query(api.table.adminStats.globalStats, { period: "all" }),
     ).rejects.toThrow();
 
     const stats = await t
       .withIdentity({ subject: admin })
-      .query(api.table.adminStats.globalStats, { granularity: "day" });
+      .query(api.table.adminStats.globalStats, { period: "all" });
     expect(stats.totals).toEqual({ visits: 0, whatsappContacts: 0 });
     expect(stats.ranking).toEqual([]);
   });
@@ -150,19 +150,19 @@ describe("globalStats consistency with the per-commerce Estadísticas (#14)", ()
 
     const global = await t
       .withIdentity({ subject: admin })
-      .query(api.table.adminStats.globalStats, { granularity: "day" });
+      .query(api.table.adminStats.globalStats, { period: "all" });
 
     const statsA = await t
       .withIdentity({ subject: ownerA })
       .query(api.table.events.statsForCommerce, {
         commerceId: a,
-        granularity: "day",
+        period: "all",
       });
     const statsB = await t
       .withIdentity({ subject: ownerB })
       .query(api.table.events.statsForCommerce, {
         commerceId: b,
-        granularity: "day",
+        period: "all",
       });
 
     expect(global.totals).toEqual({
@@ -207,7 +207,7 @@ describe("globalStats ranking by WhatsApp contacts", () => {
 
     const stats = await t
       .withIdentity({ subject: admin })
-      .query(api.table.adminStats.globalStats, { granularity: "day" });
+      .query(api.table.adminStats.globalStats, { period: "all" });
 
     expect(stats.ranking).toEqual([
       { commerceId: b, name: "Bazar", whatsappContacts: 3 },
@@ -249,7 +249,7 @@ describe("globalStats estado breakdown", () => {
 
     const stats = await t
       .withIdentity({ subject: admin })
-      .query(api.table.adminStats.globalStats, { granularity: "day" });
+      .query(api.table.adminStats.globalStats, { period: "all" });
 
     expect(stats.estadoBreakdown).toEqual([
       { estado: "pendiente", count: 1 },

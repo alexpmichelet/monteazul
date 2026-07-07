@@ -3,7 +3,7 @@ import { defineTable } from "convex/server";
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { requireCommerceOwner } from "../rbac";
-import { aggregateEvents } from "../lib/stats";
+import { aggregateEvents, evolutionSeries } from "../lib/stats";
 import { bogotaDayKey } from "../lib/tracking";
 
 /**
@@ -122,18 +122,20 @@ export const recordVisit = mutation({
   },
 });
 
-/** Period granularity backing the Estadísticas evolution chart selector. */
-export const statsGranularityValidator = v.union(
-  v.literal("day"),
+/** Period (range) backing the Estadísticas evolution chart selector. */
+export const statsPeriodValidator = v.union(
   v.literal("week"),
   v.literal("month"),
+  v.literal("all"),
 );
 
 /**
- * The Entrepreneur's statistics for one Commerce: totals (Visites, Contactos
- * por WhatsApp) and a day/week/month evolution series, aggregated AT READ from
- * the Événement journal — never from stored counters (ADR-0001). Buckets are
- * anchored to America/Bogota (see `lib/stats`).
+ * The Entrepreneur's statistics for one Commerce: all-time totals (Visites,
+ * Contactos por WhatsApp) and a gap-filled evolution series over the selected
+ * period ("Esta semana" / "Este mes" / "Todo"), aggregated AT READ from the
+ * Événement journal — never from stored counters (ADR-0001). Totals span the
+ * whole journal; only the series is range-scoped. Buckets are anchored to
+ * America/Bogota (see `lib/stats`).
  *
  * Guarded by ownership through `requireCommerceOwner`: an Entrepreneur only ever
  * reads their OWN fiche's stats. A non-owner, a plain User and an anonymous
@@ -142,7 +144,7 @@ export const statsGranularityValidator = v.union(
 export const statsForCommerce = query({
   args: {
     commerceId: v.id("commerces"),
-    granularity: statsGranularityValidator,
+    period: statsPeriodValidator,
   },
   handler: async (ctx, args) => {
     await requireCommerceOwner(ctx, args.commerceId);
@@ -150,9 +152,10 @@ export const statsForCommerce = query({
       .query("events")
       .withIndex("by_commerce", (q) => q.eq("commerceId", args.commerceId))
       .collect();
-    return aggregateEvents(
-      events.map((e) => ({ type: e.type, timestamp: e.timestamp })),
-      args.granularity,
-    );
+    const mapped = events.map((e) => ({ type: e.type, timestamp: e.timestamp }));
+    return {
+      totals: aggregateEvents(mapped, "day").totals,
+      series: evolutionSeries(mapped, args.period, Date.now()),
+    };
   },
 });

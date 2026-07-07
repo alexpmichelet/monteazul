@@ -76,12 +76,12 @@ describe("GlobalStatsView", () => {
     expect(rows[2].textContent).toContain("Cafetería");
   });
 
-  it("re-queries with the chosen granularity when the period selector changes", async () => {
+  it("re-queries with the chosen period when the selector changes", async () => {
     const client = new ConvexReactClientFake();
-    const fake = vi.fn((args: { granularity: string }) => ({
+    const fake = vi.fn((args: { period: string }) => ({
       ...FULL,
       totals:
-        args.granularity === "month"
+        args.period === "month"
           ? { visits: 9, whatsappContacts: 3 }
           : FULL.totals,
     }));
@@ -89,15 +89,15 @@ describe("GlobalStatsView", () => {
 
     renderWithConvex(<GlobalStatsView />, { client });
 
-    expect(fake).toHaveBeenCalledWith({ granularity: "day" });
+    expect(fake).toHaveBeenCalledWith({ period: "week" });
     expect(screen.getByTestId("global-stat-visitas-value").textContent).toBe(
       "128",
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Mes" }));
+    fireEvent.click(screen.getByRole("button", { name: "Este mes" }));
 
     await waitFor(() =>
-      expect(fake).toHaveBeenCalledWith({ granularity: "month" }),
+      expect(fake).toHaveBeenCalledWith({ period: "month" }),
     );
     await waitFor(() =>
       expect(

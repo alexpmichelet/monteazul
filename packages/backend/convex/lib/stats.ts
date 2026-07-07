@@ -124,6 +124,129 @@ export function aggregateEvents(
 }
 
 // ===========================================================================
+// Evolution series backing the Estadísticas period selector.
+//
+// The selector is a RANGE, not a bucket size: "Esta semana" = the last 7 Bogota
+// days, "Este mes" = the last 30, "Todo" = every month since the first event.
+// The series is GAP-FILLED — one point per bucket across the whole range, zeros
+// included — so the chart always draws a real curve, even with a single day of
+// data (the old day/week/month bucket selector collapsed to one point). Totals
+// stay all-time (see the queries); only this series is range-scoped.
+// ===========================================================================
+
+/** The three ranges backing the Estadísticas period selector. */
+export type StatsPeriod = "week" | "month" | "all";
+
+/** Days shown by "Esta semana" / "Este mes" (inclusive of today). */
+const WEEK_LOOKBACK_DAYS = 7;
+const MONTH_LOOKBACK_DAYS = 30;
+
+/** Every Bogota day key ("YYYY-MM-DD") from `sinceMs`'s day to `nowMs`'s day. */
+function enumerateDayKeys(sinceMs: number, nowMs: number): string[] {
+  const start = bogotaWallClock(sinceMs);
+  const end = bogotaWallClock(nowMs);
+  // The wall clock already carries the Bogota calendar in its UTC fields, so a
+  // plain UTC-midnight step of DAY_MS walks Bogota days exactly (no DST).
+  let cursor = Date.UTC(
+    start.getUTCFullYear(),
+    start.getUTCMonth(),
+    start.getUTCDate(),
+  );
+  const endDay = Date.UTC(
+    end.getUTCFullYear(),
+    end.getUTCMonth(),
+    end.getUTCDate(),
+  );
+  const keys: string[] = [];
+  while (cursor <= endDay) {
+    const d = new Date(cursor);
+    keys.push(
+      `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(
+        d.getUTCDate(),
+      )}`,
+    );
+    cursor += DAY_MS;
+  }
+  return keys;
+}
+
+/** Every Bogota year-month key ("YYYY-MM") from `sinceMs` to `nowMs`. */
+function enumerateMonthKeys(sinceMs: number, nowMs: number): string[] {
+  const start = bogotaWallClock(sinceMs);
+  const end = bogotaWallClock(nowMs);
+  let year = start.getUTCFullYear();
+  let month = start.getUTCMonth();
+  const endYear = end.getUTCFullYear();
+  const endMonth = end.getUTCMonth();
+  const keys: string[] = [];
+  while (year < endYear || (year === endYear && month <= endMonth)) {
+    keys.push(`${year}-${pad2(month + 1)}`);
+    month += 1;
+    if (month > 11) {
+      month = 0;
+      year += 1;
+    }
+  }
+  return keys;
+}
+
+/**
+ * Gap-filled evolution series for a period, anchored to America/Bogota:
+ * - `week`  → the last 7 days, daily buckets;
+ * - `month` → the last 30 days, daily buckets;
+ * - `all`   → every month from the earliest event to `nowMs`, monthly buckets.
+ *
+ * Returns one point per bucket across the whole range (zeros included), sorted
+ * ascending. `nowMs` is injected (not read from the clock) so the pure function
+ * stays deterministic in tests.
+ */
+export function evolutionSeries(
+  events: AggregatableEvent[],
+  period: StatsPeriod,
+  nowMs: number,
+): StatsBucket[] {
+  let granularity: StatsGranularity;
+  let sinceMs: number;
+  if (period === "week") {
+    granularity = "day";
+    sinceMs = nowMs - (WEEK_LOOKBACK_DAYS - 1) * DAY_MS;
+  } else if (period === "month") {
+    granularity = "day";
+    sinceMs = nowMs - (MONTH_LOOKBACK_DAYS - 1) * DAY_MS;
+  } else {
+    granularity = "month";
+    // "Todo" spans from the earliest event; with no events, just now's month.
+    sinceMs = events.length
+      ? events.reduce((min, e) => Math.min(min, e.timestamp), nowMs)
+      : nowMs;
+  }
+
+  const counts = new Map<string, { visits: number; whatsappContacts: number }>();
+  for (const event of events) {
+    if (event.timestamp < sinceMs || event.timestamp > nowMs) continue;
+    const key = bogotaBucketKey(event.timestamp, granularity);
+    let bucket = counts.get(key);
+    if (!bucket) {
+      bucket = { visits: 0, whatsappContacts: 0 };
+      counts.set(key, bucket);
+    }
+    if (event.type === "visit") bucket.visits += 1;
+    else bucket.whatsappContacts += 1;
+  }
+
+  const keys =
+    granularity === "month"
+      ? enumerateMonthKeys(sinceMs, nowMs)
+      : enumerateDayKeys(sinceMs, nowMs);
+
+  return keys.map((key) => ({
+    bucket: key,
+    visits: counts.get(key)?.visits ?? 0,
+    whatsappContacts: counts.get(key)?.whatsappContacts ?? 0,
+  }));
+}
+
+// ===========================================================================
 // Site-wide aggregation for the Super admin dashboard (story #15).
 //
 // Built on the SAME `aggregateEvents` primitive as the per-commerce
