@@ -56,12 +56,14 @@ export function EstadisticasView({
           value={stats?.totals.visits ?? 0}
           testId="stat-visitas-value"
           icon={<IconEye className="size-5" />}
+          accentClassName="bg-sky-100 text-sky-700"
         />
         <StatCard
           label="Contactos por WhatsApp"
           value={stats?.totals.whatsappContacts ?? 0}
           testId="stat-whatsapp-value"
           icon={<IconBrandWhatsapp className="size-5" />}
+          accentClassName="bg-emerald-100 text-emerald-700"
         />
       </div>
 

@@ -48,6 +48,7 @@ import {
   SidebarMenuSubItem,
   SidebarProvider,
   SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SiteHeader } from "@/components/site-header";
@@ -235,7 +236,13 @@ const NavUser = ({
 
 const AppSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) => {
   const pathname = usePathname();
+  const { setOpenMobile } = useSidebar();
   const currentAdmin = useQuery(api.table.admin.currentAdmin);
+
+  // Close the mobile drawer on navigation so it doesn't linger over the new page.
+  React.useEffect(() => {
+    setOpenMobile(false);
+  }, [pathname, setOpenMobile]);
 
   const user = currentAdmin
     ? {

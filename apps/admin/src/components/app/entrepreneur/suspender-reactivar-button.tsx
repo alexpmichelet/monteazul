@@ -39,7 +39,8 @@ export function SuspenderReactivarButton({
           run: suspend,
           success:
             "Tu negocio se ha suspendido y ya no aparece en el directorio.",
-          variant: "outline" as const,
+          // Destructive action (the fiche leaves the directory) → red.
+          variant: "destructive" as const,
         }
       : {
           label: "Reactivar mi publicación",

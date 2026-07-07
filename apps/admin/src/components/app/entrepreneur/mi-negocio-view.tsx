@@ -7,8 +7,16 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
+import {
+  IconClock,
+  IconInfoCircle,
+  IconMapPin,
+  IconPhone,
+  IconPhoto,
+} from "@tabler/icons-react";
 import { api } from "@packages/backend/convex/_generated/api";
 
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,13 +55,22 @@ const ESTADO_LABELS: Record<Commerce["estado"], string> = {
   suspendido: "Suspendido",
 };
 
-const ESTADO_VARIANTS: Record<
+const ESTADO_STYLES: Record<
   Commerce["estado"],
-  "default" | "secondary" | "outline"
+  { badge: string; box: string }
 > = {
-  pendiente: "secondary",
-  publicado: "default",
-  suspendido: "outline",
+  pendiente: {
+    badge: "border-amber-200 bg-amber-50 text-amber-700",
+    box: "bg-amber-50 text-amber-900",
+  },
+  publicado: {
+    badge: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    box: "bg-emerald-50 text-emerald-900",
+  },
+  suspendido: {
+    badge: "border-red-200 bg-red-50 text-red-700",
+    box: "bg-red-50 text-red-900",
+  },
 };
 
 const ESTADO_DESCRIPTIONS: Record<Commerce["estado"], string> = {
@@ -83,6 +100,31 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+/** A card title with a coloured icon chip, so each section reads at a glance. */
+function SectionTitle({
+  icon: Icon,
+  accent,
+  children,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  accent: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <CardTitle className="flex items-center gap-2.5">
+      <span
+        className={cn(
+          "flex size-8 items-center justify-center rounded-lg",
+          accent,
+        )}
+      >
+        <Icon className="size-4" />
+      </span>
+      {children}
+    </CardTitle>
+  );
+}
 
 /**
  * « Mi negocio » — the Entrepreneur's self-service screen for the fiche they
@@ -190,7 +232,10 @@ export function MiNegocioView({ commerce }: { commerce: Commerce }) {
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-3">
               <CardTitle>{commerce.name}</CardTitle>
-              <Badge variant={ESTADO_VARIANTS[commerce.estado]}>
+              <Badge
+                variant="outline"
+                className={ESTADO_STYLES[commerce.estado].badge}
+              >
                 {ESTADO_LABELS[commerce.estado]}
               </Badge>
             </div>
@@ -199,7 +244,12 @@ export function MiNegocioView({ commerce }: { commerce: Commerce }) {
           <SuspenderReactivarButton commerce={commerce} />
         </CardHeader>
         <CardContent>
-          <p className="bg-muted text-muted-foreground rounded-md p-3 text-sm">
+          <p
+            className={cn(
+              "rounded-md p-3 text-sm",
+              ESTADO_STYLES[commerce.estado].box,
+            )}
+          >
             {ESTADO_DESCRIPTIONS[commerce.estado]}
           </p>
         </CardContent>
@@ -214,7 +264,9 @@ export function MiNegocioView({ commerce }: { commerce: Commerce }) {
         {/* Información básica */}
         <Card>
           <CardHeader>
-            <CardTitle>Información básica</CardTitle>
+            <SectionTitle icon={IconInfoCircle} accent="bg-blue-100 text-blue-700">
+              Información básica
+            </SectionTitle>
           </CardHeader>
           <CardContent>
             <FieldGroup>
@@ -314,7 +366,9 @@ export function MiNegocioView({ commerce }: { commerce: Commerce }) {
         {/* Contacto */}
         <Card>
           <CardHeader>
-            <CardTitle>Contacto</CardTitle>
+            <SectionTitle icon={IconPhone} accent="bg-emerald-100 text-emerald-700">
+              Contacto
+            </SectionTitle>
           </CardHeader>
           <CardContent>
             <FieldGroup>
@@ -372,7 +426,9 @@ export function MiNegocioView({ commerce }: { commerce: Commerce }) {
         {/* Horario */}
         <Card>
           <CardHeader>
-            <CardTitle>Horario</CardTitle>
+            <SectionTitle icon={IconClock} accent="bg-violet-100 text-violet-700">
+              Horario
+            </SectionTitle>
           </CardHeader>
           <CardContent>
             <HorarioEditor
@@ -386,7 +442,9 @@ export function MiNegocioView({ commerce }: { commerce: Commerce }) {
         {/* Ubicación y detalles */}
         <Card>
           <CardHeader>
-            <CardTitle>Ubicación y detalles</CardTitle>
+            <SectionTitle icon={IconMapPin} accent="bg-rose-100 text-rose-700">
+              Ubicación y detalles
+            </SectionTitle>
           </CardHeader>
           <CardContent>
             <FieldGroup>
@@ -471,7 +529,9 @@ export function MiNegocioView({ commerce }: { commerce: Commerce }) {
       {/* Fotos */}
       <Card>
         <CardHeader>
-          <CardTitle>Fotos del negocio</CardTitle>
+          <SectionTitle icon={IconPhoto} accent="bg-indigo-100 text-indigo-700">
+            Fotos del negocio
+          </SectionTitle>
         </CardHeader>
         <CardContent>
           <PhotoManager commerce={commerce} />

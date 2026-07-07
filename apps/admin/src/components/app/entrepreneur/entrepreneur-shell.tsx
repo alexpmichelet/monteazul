@@ -37,6 +37,7 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SiteHeader } from "@/components/site-header";
@@ -178,7 +179,14 @@ const EntrepreneurSidebar = ({
   ...props
 }: React.ComponentProps<typeof Sidebar>) => {
   const pathname = usePathname();
+  const { setOpenMobile } = useSidebar();
   const me = useQuery(api.table.users.currentUser);
+
+  // Close the mobile drawer whenever the route changes — otherwise it stays
+  // open on top of the new page after tapping a nav item.
+  React.useEffect(() => {
+    setOpenMobile(false);
+  }, [pathname, setOpenMobile]);
 
   const user = me
     ? {
