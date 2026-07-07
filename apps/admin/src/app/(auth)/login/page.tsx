@@ -1,11 +1,8 @@
-import { LoginForm } from "@/components/app/auth/login-form"
+import { redirect } from "next/navigation";
 
+// The admin app has a single login page, in Spanish, at /acceso. This old
+// English "Admin Portal" route is kept only as a redirect so any bookmark or
+// stale link still lands on the real login.
 export default function LoginPage() {
-  return (
-    <div className="bg-muted flex min-h-svh flex-col items-center justify-center p-6 md:p-10">
-      <div className="w-full max-w-sm md:max-w-4xl">
-        <LoginForm />
-      </div>
-    </div>
-  )
+  redirect("/acceso");
 }

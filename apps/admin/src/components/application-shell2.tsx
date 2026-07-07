@@ -170,7 +170,7 @@ const NavUser = ({
 
   async function handleLogout() {
     await signOut();
-    router.push("/login");
+    router.push("/acceso");
   }
 
   const initials = getInitials(user.name);

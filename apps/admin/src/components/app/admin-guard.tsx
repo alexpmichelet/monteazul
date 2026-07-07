@@ -16,15 +16,16 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
   );
 
   useEffect(() => {
-    // Not loading and not authenticated -> redirect to login
+    // Not authenticated -> the single (Spanish) login page.
     if (!isAuthLoading && !isAuthenticated) {
-      router.replace("/login");
+      router.replace("/acceso");
       return;
     }
 
-    // Authenticated but not an admin -> redirect to login with error
+    // Authenticated but not a Super admin -> this is an Entrepreneur (or a
+    // fresh user); send them to their own space instead of a dead-end error.
     if (isAuthenticated && admin === null) {
-      router.replace("/login?error=admin_required");
+      router.replace("/mi-negocio");
     }
   }, [isAuthLoading, isAuthenticated, admin, router]);
 
