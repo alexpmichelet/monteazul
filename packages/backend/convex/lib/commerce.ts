@@ -41,13 +41,19 @@ export const residesValidator = v.union(
   ...RESIDES_VALUES.map((value) => v.literal(value)),
 );
 
-/** Structured Horario validator — mirrors the `Horario` type in `lib/horario`. */
+/** One open window — mirrors `ServiceWindow` in `lib/horario`. */
+export const serviceWindowValidator = v.object({
+  dayOfWeek: v.number(), // 0 = Sunday … 6 = Saturday
+  from: v.number(), // minutes-of-day
+  to: v.number(), // minutes-of-day, from < to
+});
+
+/** Structured Horario validator — mirrors the `Horario` type in `lib/horario`:
+ *  a weekly per-day schedule (`semanal`) or the "Disponible" mode. */
 export const horarioValidator = v.union(
   v.object({
-    mode: v.literal("plages"),
-    days: v.string(),
-    from: v.number(),
-    to: v.number(),
+    mode: v.literal("semanal"),
+    windows: v.array(serviceWindowValidator),
   }),
   v.object({
     mode: v.literal("disponible"),

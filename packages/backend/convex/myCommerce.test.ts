@@ -45,7 +45,7 @@ async function insertCommerce(
       }),
       whatsapp: "3001234567",
       photos: [],
-      horario: { mode: "plages", days: "Lun – Vie", from: 540, to: 1080 },
+      horario: { mode: "semanal", windows: [{ dayOfWeek: 1, from: 540, to: 1080 }] },
       torreApto: "Torre 1 · Apto 101",
       resides: "Resido en Monteazul",
       notas: "Nota interna confidencial",
@@ -66,7 +66,7 @@ function editArgs(
     category: "Tecnología",
     description: "Descripción editada por el dueño.",
     whatsapp: "3001234567",
-    horario: { mode: "plages" as const, days: "Lun – Vie", from: 540, to: 1080 },
+    horario: { mode: "semanal" as const, windows: [{ dayOfWeek: 1, from: 540, to: 1080 }] },
     resides: "Resido en Monteazul",
     ...over,
   };

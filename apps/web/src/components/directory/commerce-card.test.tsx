@@ -47,7 +47,14 @@ const commerce: DirectoryCommerce = {
   description: "Almuerzos caseros.",
   whatsapp: "3182173887",
   photos: [],
-  horario: { mode: "plages", days: "Lun – Vie", from: 690, to: 900 },
+  horario: {
+    mode: "semanal",
+    windows: [1, 2, 3, 4, 5].map((dayOfWeek) => ({
+      dayOfWeek,
+      from: 690,
+      to: 900,
+    })),
+  },
   torreApto: "Torre 4 · Apto 926",
   instagram: "sazon.abuela",
   contactName: "María López",

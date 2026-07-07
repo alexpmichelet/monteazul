@@ -8,14 +8,14 @@ import schema from "./schema";
 // Provide glob explicitly so convex-test can locate _generated/ and all modules.
 const modules = import.meta.glob("./**/*.*s");
 
-/** A fully valid fiche submission (Comida y bebida, plages Horario). */
+/** A fully valid fiche submission (Comida y bebida, semanal Horario). */
 const validArgs = {
   name: "Panadería El Sol",
   category: "Comida y bebida",
   subcategories: ["Panadería y repostería"],
   description: "Pan artesanal horneado a diario en el barrio.",
   whatsapp: "3182173887",
-  horario: { mode: "plages" as const, days: "Lun – Vie", from: 450, to: 960 },
+  horario: { mode: "semanal" as const, windows: [{ dayOfWeek: 1, from: 450, to: 960 }] },
   torreApto: "Torre 4 · Apto 926",
   instagram: "https://instagram.com/panaderiaelsol",
   contactName: "María",
@@ -58,18 +58,16 @@ describe("submitCommerce — création de la fiche et attribution du rôle", () 
     ).rejects.toThrow();
   });
 
-  test("persiste l'Horario en mode « plages »", async () => {
+  test("persiste l'Horario en mode « semanal »", async () => {
     const t = convexTest(schema, modules);
-    const userId = await makeAccount(t, "plages@example.com");
+    const userId = await makeAccount(t, "semanal@example.com");
     const commerceId = await t
       .withIdentity({ subject: userId })
       .mutation(api.table.commerces.submitCommerce, validArgs);
     const commerce = await t.run((ctx) => ctx.db.get(commerceId));
     expect(commerce?.horario).toEqual({
-      mode: "plages",
-      days: "Lun – Vie",
-      from: 450,
-      to: 960,
+      mode: "semanal",
+      windows: [{ dayOfWeek: 1, from: 450, to: 960 }],
     });
   });
 

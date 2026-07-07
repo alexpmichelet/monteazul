@@ -75,12 +75,12 @@ describe("seedDev", () => {
     }
   });
 
-  test("includes both plages and disponible horarios", async () => {
+  test("includes both semanal and disponible horarios", async () => {
     const t = convexTest(schema, modules);
     await t.mutation(internal.seed.seedDev, {});
     const commerces = await t.run((ctx) => ctx.db.query("commerces").collect());
     const modes = new Set(commerces.map((c) => c.horario?.mode));
-    expect(modes.has("plages")).toBe(true);
+    expect(modes.has("semanal")).toBe(true);
     expect(modes.has("disponible")).toBe(true);
   });
 

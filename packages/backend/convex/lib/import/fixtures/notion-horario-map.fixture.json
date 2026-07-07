@@ -1,11 +1,31 @@
 [
   {
     "raw": "Lunes a viernes de 8:00 a 16:00",
-    "horario": { "mode": "plages", "days": "Lun – Vie", "from": 480, "to": 960 }
+    "horario": {
+      "mode": "semanal",
+      "windows": [
+        { "dayOfWeek": 1, "from": 480, "to": 960 },
+        { "dayOfWeek": 2, "from": 480, "to": 960 },
+        { "dayOfWeek": 3, "from": 480, "to": 960 },
+        { "dayOfWeek": 4, "from": 480, "to": 960 },
+        { "dayOfWeek": 5, "from": 480, "to": 960 }
+      ]
+    }
   },
   {
     "raw": "Todos los días de 6:00 a 20:00",
-    "horario": { "mode": "plages", "days": "Lun – Dom", "from": 360, "to": 1200 }
+    "horario": {
+      "mode": "semanal",
+      "windows": [
+        { "dayOfWeek": 0, "from": 360, "to": 1200 },
+        { "dayOfWeek": 1, "from": 360, "to": 1200 },
+        { "dayOfWeek": 2, "from": 360, "to": 1200 },
+        { "dayOfWeek": 3, "from": 360, "to": 1200 },
+        { "dayOfWeek": 4, "from": 360, "to": 1200 },
+        { "dayOfWeek": 5, "from": 360, "to": 1200 },
+        { "dayOfWeek": 6, "from": 360, "to": 1200 }
+      ]
+    }
   },
   {
     "raw": "Bajo pedido",
@@ -13,7 +33,16 @@
   },
   {
     "raw": "Martes a sábado de 9:00 a 18:00",
-    "horario": { "mode": "plages", "days": "Mar – Sáb", "from": 540, "to": 1080 }
+    "horario": {
+      "mode": "semanal",
+      "windows": [
+        { "dayOfWeek": 2, "from": 540, "to": 1080 },
+        { "dayOfWeek": 3, "from": 540, "to": 1080 },
+        { "dayOfWeek": 4, "from": 540, "to": 1080 },
+        { "dayOfWeek": 5, "from": 540, "to": 1080 },
+        { "dayOfWeek": 6, "from": 540, "to": 1080 }
+      ]
+    }
   },
   {
     "raw": "Con cita previa",

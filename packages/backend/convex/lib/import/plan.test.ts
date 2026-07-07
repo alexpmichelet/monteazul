@@ -159,10 +159,14 @@ describe("buildImportPlan — fixture", () => {
 
   test("resolves free-text Horario through the correspondence table", () => {
     expect(fiche("arepas.laesquina@example.com").form.horario).toEqual({
-      mode: "plages",
-      days: "Lun – Vie",
-      from: 480,
-      to: 960,
+      mode: "semanal",
+      windows: [
+        { dayOfWeek: 1, from: 480, to: 960 },
+        { dayOfWeek: 2, from: 480, to: 960 },
+        { dayOfWeek: 3, from: 480, to: 960 },
+        { dayOfWeek: 4, from: 480, to: 960 },
+        { dayOfWeek: 5, from: 480, to: 960 },
+      ],
     });
     expect(fiche("tecno.mz@example.com").form.horario).toEqual({
       mode: "disponible",

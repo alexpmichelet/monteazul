@@ -20,14 +20,14 @@ async function makeUser(
   return await t.run((ctx) => ctx.db.insert("users", { email, role }));
 }
 
-/** A fully valid fiche payload (Comida y bebida, plages Horario). */
+/** A fully valid fiche payload (Comida y bebida, semanal Horario). */
 const validFiche = {
   name: "Panadería El Sol",
   category: "Comida y bebida",
   subcategories: ["Panadería y repostería"],
   description: "Pan artesanal horneado a diario en el barrio.",
   whatsapp: "3182173887",
-  horario: { mode: "plages" as const, days: "Lun – Vie", from: 450, to: 960 },
+  horario: { mode: "semanal" as const, windows: [{ dayOfWeek: 1, from: 450, to: 960 }] },
   torreApto: "Torre 4 · Apto 926",
   instagram: "https://instagram.com/panaderiaelsol",
   contactName: "María López",

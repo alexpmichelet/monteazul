@@ -9,7 +9,7 @@ import type { FunctionReturnType } from "convex/server";
 import { api } from "@packages/backend/convex/_generated/api";
 import {
   commerceStatus,
-  formatMinutes,
+  weeklyScheduleRows,
 } from "@packages/backend/convex/lib/horario";
 
 import {
@@ -91,7 +91,7 @@ function DetailContent({
 }) {
   const secondary = commerce.subcategories?.[0] ?? commerce.category;
   const status = commerce.horario ? commerceStatus(commerce.horario, now) : null;
-  const horarioLines = horarioCardLines(commerce.horario);
+  const schedule = horarioSchedule(commerce.horario);
   const phone = formatColombianPhone(commerce.whatsapp);
   const waHref = whatsAppLink(commerce.whatsapp);
   const ig = commerce.instagram ? instagramLink(commerce.instagram) : null;
@@ -147,21 +147,38 @@ function DetailContent({
             {commerce.description}
           </p>
 
-          {horarioLines && status ? (
+          {schedule && status ? (
             <div className="mt-6 rounded-card border border-hairline p-4">
               <div className="flex items-center gap-2 text-sm font-bold text-ink">
                 <Clock className="size-[17px] text-primary" strokeWidth={2} />
                 Horario
               </div>
-              <div className="mt-[11px] flex items-center justify-between">
-                <span className="text-sm text-ink-muted">
-                  {horarioLines.days}
-                </span>
-                <span className="text-sm font-semibold text-ink">
-                  {horarioLines.hours}
-                </span>
-              </div>
-              <div className="mt-[9px] text-[12.5px] font-medium text-ink-muted">
+              {schedule.kind === "disponible" ? (
+                <div className="mt-[11px] text-sm font-semibold text-ink">
+                  {schedule.label}
+                </div>
+              ) : (
+                <div className="mt-[11px] flex flex-col gap-1.5">
+                  {schedule.rows.map((row) => (
+                    <div
+                      key={row.day}
+                      className="flex items-center justify-between text-sm"
+                    >
+                      <span className="text-ink-muted">{row.day}</span>
+                      <span
+                        className={
+                          row.hours === "Cerrado"
+                            ? "text-ink-faint"
+                            : "font-semibold text-ink"
+                        }
+                      >
+                        {row.hours}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="mt-3 text-[12.5px] font-medium text-ink-muted">
                 {status.text}
               </div>
             </div>
@@ -217,21 +234,22 @@ function DetailContent({
 }
 
 /**
- * Top-row (days) and right-aligned (hours) lines of the « Horario » card. For a
- * time-range horario it shows the days and the `H:MM – H:MM` window; for the
- * special « Disponible » mode it shows the mode label with no hour range.
+ * The « Horario » card content. A `semanal` horario becomes a Monday-first list
+ * of per-day windows (a day with no window reads "Cerrado"); the special
+ * « Disponible » mode shows its label (con cita previa / sobre pedido).
  */
-function horarioCardLines(
+type HorarioSchedule =
+  | { kind: "disponible"; label: string }
+  | { kind: "semanal"; rows: { day: string; hours: string }[] };
+
+function horarioSchedule(
   horario: DetailCommerce["horario"],
-): { days: string; hours: string } | null {
+): HorarioSchedule | null {
   if (!horario) return null;
-  if (horario.mode === "plages") {
-    return {
-      days: horario.days,
-      hours: `${formatMinutes(horario.from)} – ${formatMinutes(horario.to)}`,
-    };
+  if (horario.mode === "disponible") {
+    return { kind: "disponible", label: horario.label };
   }
-  return { days: "Disponible", hours: "—" };
+  return { kind: "semanal", rows: weeklyScheduleRows(horario.windows) };
 }
 
 function DetailLoading() {

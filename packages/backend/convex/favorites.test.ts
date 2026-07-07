@@ -36,7 +36,7 @@ async function insertCommerce(
       searchText: commerceSearchText({ name: seed.name, category, description }),
       whatsapp: "3001234567",
       photos: [],
-      horario: { mode: "plages", days: "Lun – Vie", from: 540, to: 1080 },
+      horario: { mode: "semanal", windows: [{ dayOfWeek: 1, from: 540, to: 1080 }] },
       torreApto: "Torre 1 · Apto 101",
       resides: "Resido en Monteazul",
       notas: "Nota interna confidencial",

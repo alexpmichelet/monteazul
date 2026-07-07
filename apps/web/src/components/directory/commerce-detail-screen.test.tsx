@@ -51,7 +51,14 @@ function makeCommerce(
     description: "Almuerzos caseros y comida típica colombiana.",
     whatsapp: "3182173887",
     photos: [],
-    horario: { mode: "plages", days: "Lun – Vie", from: 690, to: 900 },
+    horario: {
+      mode: "semanal",
+      windows: [1, 2, 3, 4, 5].map((dayOfWeek) => ({
+        dayOfWeek,
+        from: 690,
+        to: 900,
+      })),
+    },
     torreApto: "Torre 4 · Apto 926",
     instagram: "sazon.abuela",
     contactName: "María López",
@@ -111,20 +118,23 @@ describe("CommerceDetailScreen", () => {
     ).toBeDefined();
   });
 
-  it("renders the Horario card with days and formatted hours", () => {
+  it("renders the Horario card as a per-day weekly schedule", () => {
     renderDetail(makeCommerce());
-    expect(screen.getByText("Lun – Vie")).toBeDefined();
-    expect(screen.getByText("11:30 – 15:00")).toBeDefined();
+    expect(screen.getByText("Lunes")).toBeDefined();
+    expect(screen.getByText("Sábado")).toBeDefined();
+    expect(screen.getByText("Domingo")).toBeDefined();
+    // Mon–Fri share the same 11:30–15:00 window (Sat & Sun read "Cerrado").
+    expect(screen.getAllByText("11:30 – 15:00")).toHaveLength(5);
   });
 
-  it("renders the « Disponible » horario mode with its state text and no hour range", () => {
+  it("renders the « Disponible » horario mode with its label and state text", () => {
     renderDetail(
       makeCommerce({
         horario: { mode: "disponible", label: "con cita previa" },
       }),
     );
+    expect(screen.getByText("con cita previa")).toBeDefined();
     expect(screen.getByText("Disponible · con cita previa")).toBeDefined();
-    expect(screen.getByText("—")).toBeDefined();
   });
 
   it("renders the phone in « +57 XXX XXX XXXX » format and the Instagram link", () => {

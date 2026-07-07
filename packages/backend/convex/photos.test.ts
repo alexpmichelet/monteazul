@@ -36,7 +36,7 @@ async function makeCommerce(
       searchText: commerceSearchText(base),
       whatsapp: "3182173887",
       photos: [],
-      horario: { mode: "plages", days: "Lun – Vie", from: 450, to: 960 },
+      horario: { mode: "semanal", windows: [{ dayOfWeek: 1, from: 450, to: 960 }] },
       torreApto: "Torre 4 · Apto 926",
       resides: "Resido en Monteazul",
       estado: "pendiente",

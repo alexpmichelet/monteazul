@@ -36,11 +36,24 @@ type SeedCommerce = {
   estado: Estado;
 };
 
-const plages = (days: string, from: number, to: number): Horario => ({
-  mode: "plages",
-  days,
-  from,
-  to,
+/** Day indices (0 = Sunday … 6 = Saturday) for the Spanish day ranges below. */
+const DAY_RANGES: Record<string, number[]> = {
+  "Lun – Vie": [1, 2, 3, 4, 5],
+  "Lun – Sáb": [1, 2, 3, 4, 5, 6],
+  "Lun – Dom": [0, 1, 2, 3, 4, 5, 6],
+  "Mar – Dom": [2, 3, 4, 5, 6, 0],
+  "Mar – Sáb": [2, 3, 4, 5, 6],
+  "Mié – Dom": [3, 4, 5, 6, 0],
+};
+
+// Readable seed shorthand: the same window on every day of a Spanish range.
+const semanal = (days: string, from: number, to: number): Horario => ({
+  mode: "semanal",
+  windows: (DAY_RANGES[days] ?? []).map((dayOfWeek) => ({
+    dayOfWeek,
+    from,
+    to,
+  })),
 });
 
 const disponible = (label: string): Horario => ({ mode: "disponible", label });
@@ -55,7 +68,7 @@ const SEED_COMMERCES: SeedCommerce[] = [
     description:
       "Almuerzos caseros y comida típica colombiana, preparados cada día con ingredientes frescos. Menú del día y pedidos para llevar.",
     whatsapp: "3182173887",
-    horario: plages("Lun – Vie", 690, 900),
+    horario: semanal("Lun – Vie", 690, 900),
     torreApto: "Torre 4 · Apto 926",
     instagram: "sazon.abuela",
     resides: "Resido en Monteazul",
@@ -71,7 +84,7 @@ const SEED_COMMERCES: SeedCommerce[] = [
     description:
       "Pan artesanal horneado todos los días, repostería fresca y tortas por encargo. Ideal para el desayuno en familia.",
     whatsapp: "3001234501",
-    horario: plages("Lun – Dom", 360, 1200),
+    horario: semanal("Lun – Dom", 360, 1200),
     torreApto: "Torre 2 · Local 3",
     instagram: "eltrigal.pan",
     resides: "Resido cerca de la zona",
@@ -87,7 +100,7 @@ const SEED_COMMERCES: SeedCommerce[] = [
     description:
       "Helados artesanales, postres fríos y dulces caseros por porción o para eventos. Sabores rotativos cada semana.",
     whatsapp: "3001234502",
-    horario: plages("Mar – Dom", 780, 1260),
+    horario: semanal("Mar – Dom", 780, 1260),
     torreApto: "Torre 7 · Apto 512",
     instagram: "dulce.monte",
     resides: "Resido en Monteazul",
@@ -103,7 +116,7 @@ const SEED_COMMERCES: SeedCommerce[] = [
     description:
       "Frutas, verduras y productos de mercado seleccionados a diario. Combos de fruver y entregas a domicilio.",
     whatsapp: "3001234503",
-    horario: plages("Lun – Sáb", 420, 1140),
+    horario: semanal("Lun – Sáb", 420, 1140),
     torreApto: "Entrada principal",
     instagram: "lacosecha.fruver",
     resides: "No resido cerca de la zona",
@@ -135,7 +148,7 @@ const SEED_COMMERCES: SeedCommerce[] = [
     description:
       "Snacks saludables, barras energéticas y opciones sin azúcar. Meriendas ligeras para toda la familia.",
     whatsapp: "3001234505",
-    horario: plages("Lun – Vie", 480, 1080),
+    horario: semanal("Lun – Vie", 480, 1080),
     torreApto: "Torre 5 · Apto 302",
     instagram: "verde.vida",
     resides: "Resido en Monteazul",
@@ -151,7 +164,7 @@ const SEED_COMMERCES: SeedCommerce[] = [
     description:
       "Antojos variados, bebidas caseras y preparaciones especiales para reuniones. Pregunta por el menú de la semana.",
     whatsapp: "3001234506",
-    horario: plages("Mié – Dom", 600, 960),
+    horario: semanal("Mié – Dom", 600, 960),
     torreApto: "Torre 1 · Apto 704",
     instagram: "delicias.marta",
     resides: "Resido cerca de la zona",
@@ -166,7 +179,7 @@ const SEED_COMMERCES: SeedCommerce[] = [
     description:
       "Tienda para mascotas: alimento, accesorios y servicio de baño y peluquería canina. Asesoría en nutrición.",
     whatsapp: "3001234507",
-    horario: plages("Lun – Dom", 540, 1140),
+    horario: semanal("Lun – Dom", 540, 1140),
     torreApto: "Torre 6 · Local 1",
     instagram: "huellitas.pet",
     resides: "Resido en Monteazul",
@@ -181,7 +194,7 @@ const SEED_COMMERCES: SeedCommerce[] = [
     description:
       "Peluquería y estética integral: corte, color, manicura y tratamientos faciales. Atención con cita para evitar esperas.",
     whatsapp: "3001234508",
-    horario: plages("Mar – Sáb", 540, 1080),
+    horario: semanal("Mar – Sáb", 540, 1080),
     torreApto: "Torre 1 · Apto 204",
     instagram: "aura.belleza",
     resides: "Resido cerca de la zona",
@@ -211,7 +224,7 @@ const SEED_COMMERCES: SeedCommerce[] = [
     description:
       "Ropa y accesorios de diseño local para mujer y hombre. Nuevas colecciones cada temporada y arreglos a la medida.",
     whatsapp: "3001234510",
-    horario: plages("Lun – Sáb", 600, 1140),
+    horario: semanal("Lun – Sáb", 600, 1140),
     torreApto: "Torre 2 · Apto 118",
     instagram: "moda.andina",
     resides: "Resido en Monteazul",
@@ -241,7 +254,7 @@ const SEED_COMMERCES: SeedCommerce[] = [
     description:
       "Reparación de celulares, computadores y accesorios tecnológicos. Diagnóstico rápido y repuestos con garantía.",
     whatsapp: "3001234512",
-    horario: plages("Lun – Sáb", 540, 1080),
+    horario: semanal("Lun – Sáb", 540, 1080),
     torreApto: "Torre 4 · Local 5",
     instagram: "tecnofix.mz",
     resides: "Resido en Monteazul",
@@ -271,7 +284,7 @@ const SEED_COMMERCES: SeedCommerce[] = [
     description:
       "Espacio de trueque e intercambio de objetos entre vecinos. Publica lo que ya no usas y encuentra lo que necesitas.",
     whatsapp: "3001234514",
-    horario: plages("Lun – Vie", 600, 1020),
+    horario: semanal("Lun – Vie", 600, 1020),
     torreApto: "Salón comunal",
     instagram: "trueques.barrio",
     resides: "Resido en Monteazul",
