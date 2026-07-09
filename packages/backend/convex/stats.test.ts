@@ -118,6 +118,22 @@ describe("statsForCommerce — ownership guard", () => {
       }),
     ).rejects.toThrow();
   });
+
+  test("even a Super admin is refused on another's fiche — stats are strictly owner-only (admins have globalStats)", async () => {
+    const t = convexTest(schema, modules);
+    const owner = await insertOwner(t, "owner@example.com");
+    const admin = await insertOwner(t, "admin@example.com", "admin");
+    const commerceId = await insertCommerce(t, owner);
+
+    await expect(
+      t
+        .withIdentity({ subject: admin })
+        .query(api.table.events.statsForCommerce, {
+          commerceId,
+          period: "all",
+        }),
+    ).rejects.toThrow();
+  });
 });
 
 describe("statsForCommerce — aggregation", () => {

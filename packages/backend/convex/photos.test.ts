@@ -251,7 +251,7 @@ describe("reorderPhotos — ordre persisté", () => {
     expect(await photosOf(t, commerceId)).toEqual(ids);
   });
 
-  test("refuse un non-propriétaire", async () => {
+  test("refuse un non-propriétaire — l'ordre reste inchangé", async () => {
     const t = convexTest(schema, modules);
     const { commerceId, ids } = await seedThreePhotos(t);
     const otherId = await makeUser(t, "other@example.com", "entreprise");
@@ -262,6 +262,36 @@ describe("reorderPhotos — ordre persisté", () => {
         { commerceId, photoIds: [ids[2], ids[1], ids[0]] },
       ),
     ).rejects.toThrow();
+    expect(await photosOf(t, commerceId)).toEqual(ids);
+  });
+
+  test("refuse un appelant anonyme (Visiteur) — l'ordre reste inchangé", async () => {
+    const t = convexTest(schema, modules);
+    const { commerceId, ids } = await seedThreePhotos(t);
+
+    await expect(
+      t.mutation(api.table.commerces.reorderPhotos, {
+        commerceId,
+        photoIds: [ids[2], ids[1], ids[0]],
+      }),
+    ).rejects.toThrow();
+    expect(await photosOf(t, commerceId)).toEqual(ids);
+  });
+
+  test("autorise un Super admin à réordonner la fiche d'un autre", async () => {
+    const t = convexTest(schema, modules);
+    const { commerceId, ids } = await seedThreePhotos(t);
+    const adminId = await makeUser(t, "admin@example.com", "admin");
+    const reordered = [ids[1], ids[2], ids[0]];
+
+    await t
+      .withIdentity({ subject: adminId })
+      .mutation(api.table.commerces.reorderPhotos, {
+        commerceId,
+        photoIds: reordered,
+      });
+
+    expect(await photosOf(t, commerceId)).toEqual(reordered);
   });
 });
 
@@ -311,9 +341,9 @@ describe("removePhoto — suppression persistée", () => {
     ).rejects.toThrow();
   });
 
-  test("refuse un non-propriétaire", async () => {
+  test("refuse un non-propriétaire — la vitrine reste inchangée", async () => {
     const t = convexTest(schema, modules);
-    const { commerceId, first } = await seedTwoPhotos(t);
+    const { commerceId, first, second } = await seedTwoPhotos(t);
     const otherId = await makeUser(t, "other@example.com", "entreprise");
 
     await expect(
@@ -322,6 +352,35 @@ describe("removePhoto — suppression persistée", () => {
         { commerceId, storageId: first },
       ),
     ).rejects.toThrow();
+    expect(await photosOf(t, commerceId)).toEqual([first, second]);
+  });
+
+  test("refuse un appelant anonyme (Visiteur) — la vitrine reste inchangée", async () => {
+    const t = convexTest(schema, modules);
+    const { commerceId, first, second } = await seedTwoPhotos(t);
+
+    await expect(
+      t.mutation(api.table.commerces.removePhoto, {
+        commerceId,
+        storageId: first,
+      }),
+    ).rejects.toThrow();
+    expect(await photosOf(t, commerceId)).toEqual([first, second]);
+  });
+
+  test("autorise un Super admin à supprimer une photo de la fiche d'un autre", async () => {
+    const t = convexTest(schema, modules);
+    const { commerceId, first, second } = await seedTwoPhotos(t);
+    const adminId = await makeUser(t, "admin@example.com", "admin");
+
+    await t
+      .withIdentity({ subject: adminId })
+      .mutation(api.table.commerces.removePhoto, {
+        commerceId,
+        storageId: first,
+      });
+
+    expect(await photosOf(t, commerceId)).toEqual([second]);
   });
 });
 
@@ -359,5 +418,17 @@ describe("generatePhotoUploadUrl — garde d'ownership", () => {
     await expect(
       t.mutation(api.table.commerces.generatePhotoUploadUrl, { commerceId }),
     ).rejects.toThrow();
+  });
+
+  test("autorise un Super admin sur la fiche d'un autre", async () => {
+    const t = convexTest(schema, modules);
+    const ownerId = await makeUser(t, "owner@example.com", "entreprise");
+    const adminId = await makeUser(t, "admin@example.com", "admin");
+    const commerceId = await makeCommerce(t, ownerId);
+
+    const url = await t
+      .withIdentity({ subject: adminId })
+      .mutation(api.table.commerces.generatePhotoUploadUrl, { commerceId });
+    expect(typeof url).toBe("string");
   });
 });
