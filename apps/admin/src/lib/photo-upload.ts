@@ -1,3 +1,5 @@
+import type { Id } from "@packages/backend/convex/_generated/dataModel";
+
 /**
  * Client-side photo optimisation for the « Mi negocio » vitrine. The directory
  * is consumed on mobile, so before uploading we downscale to a sensible longest
@@ -51,4 +53,37 @@ export async function compressImage(file: File): Promise<Blob> {
   } catch {
     return file;
   }
+}
+
+/** A blob stored in Convex, as the fiche-creation mutations expect it. */
+export type UploadedPhoto = {
+  storageId: Id<"_storage">;
+  contentType: string;
+};
+
+/**
+ * Compress + POST one picked image to a Convex upload URL. Shared by the forms
+ * that create a fiche WITH photos (entrepreneur wizard, admin seeded account):
+ * both pick files locally and only upload at submission. Throws a Spanish,
+ * user-safe error when the upload fails.
+ */
+export async function uploadCompressedPhoto(
+  getUploadUrl: () => Promise<string>,
+  file: File,
+): Promise<UploadedPhoto> {
+  const blob = await compressImage(file);
+  const contentType = blob.type || file.type;
+  const uploadUrl = await getUploadUrl();
+  const response = await fetch(uploadUrl, {
+    method: "POST",
+    headers: { "Content-Type": contentType },
+    body: blob,
+  });
+  if (!response.ok) {
+    throw new Error(`No se pudo subir "${file.name}".`);
+  }
+  const { storageId } = (await response.json()) as {
+    storageId: Id<"_storage">;
+  };
+  return { storageId, contentType };
 }

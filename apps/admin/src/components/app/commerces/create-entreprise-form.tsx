@@ -25,6 +25,14 @@ import {
   CommerceFields,
   type CommerceFieldsValues,
 } from "@/components/app/commerces/commerce-fields";
+import {
+  PhotoPicker,
+  type PickedPhoto,
+} from "@/components/app/entrepreneur/photo-picker";
+import {
+  uploadCompressedPhoto,
+  type UploadedPhoto,
+} from "@/lib/photo-upload";
 
 // Client-side email check mirroring the backend `EMAIL_PATTERN`.
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -67,10 +75,14 @@ export function CreateEntrepriseForm() {
   const createSeededEntreprise = useMutation(
     api.table.seededEntreprise.createSeededEntreprise,
   );
+  const generateSubmissionUploadUrl = useMutation(
+    api.table.commerces.generateSubmissionUploadUrl,
+  );
 
   const [subcategories, setSubcategories] = React.useState<string[]>([]);
   const [horario, setHorario] = React.useState<Horario>(DEFAULT_HORARIO);
   const [horarioError, setHorarioError] = React.useState<string | null>(null);
+  const [photos, setPhotos] = React.useState<PickedPhoto[]>([]);
   const [formError, setFormError] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [credentials, setCredentials] = React.useState<Credentials | null>(
@@ -107,6 +119,9 @@ export function CreateEntrepriseForm() {
     setSubcategories([]);
     setHorario(DEFAULT_HORARIO);
     setHorarioError(null);
+    // Preview URLs were already revoked when the picker unmounted (credentials
+    // screen) — only the stale entries need clearing.
+    setPhotos([]);
     setFormError(null);
     setCredentials(null);
   }
@@ -125,6 +140,30 @@ export function CreateEntrepriseForm() {
     const subcats = isComida ? subcategories : [];
 
     setIsLoading(true);
+
+    // Upload the picked photos now (selection order = vitrine order) so the
+    // seeded fiche is published with its vitrine at once.
+    const photoIds: UploadedPhoto[] = [];
+    try {
+      for (const photo of photos) {
+        photoIds.push(
+          await uploadCompressedPhoto(
+            () => generateSubmissionUploadUrl(),
+            photo.file,
+          ),
+        );
+      }
+    } catch (error) {
+      setFormError(
+        getConvexErrorMessage(
+          error,
+          "No se pudieron subir las fotos. Revisa tu conexión e inténtalo de nuevo.",
+        ),
+      );
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const result = await createSeededEntreprise({
         email: data.email,
@@ -139,6 +178,7 @@ export function CreateEntrepriseForm() {
         contactName: data.contactName || undefined,
         resides: data.resides,
         notas: data.notas || undefined,
+        photos: photoIds.length > 0 ? photoIds : undefined,
       });
       setCredentials(result);
       toast.success("Cuenta de empresa creada.");
@@ -220,6 +260,11 @@ export function CreateEntrepriseForm() {
               residesLabel="¿Resides en Monteazul? (interno)"
               notasLabel="Notas (interno)"
             />
+
+            <Field>
+              <FieldLabel>Fotos del negocio</FieldLabel>
+              <PhotoPicker value={photos} onChange={setPhotos} />
+            </Field>
 
             <Field>
               <Button

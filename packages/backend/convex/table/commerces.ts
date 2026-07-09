@@ -305,6 +305,42 @@ export const getFormOptions = query({
   }),
 });
 
+/** Client contract of a pre-uploaded fiche photo (wizard / admin seeding). */
+export const submittedPhotoValidator = v.object({
+  storageId: v.id("_storage"),
+  contentType: v.string(),
+});
+
+/**
+ * Validate pre-uploaded photo blobs for a fiche created WITH photos
+ * (`submitCommerce`, `createSeededEntreprise`). Same rules as `addPhoto`: the
+ * blob must be an image within the size cap, the storage-recorded content type
+ * winning over the client-declared one. Returns the ordered, deduped storage
+ * ids; a rejected or unknown blob is deleted/skipped rather than failing the
+ * whole creation — which is why this never throws (a throw would roll back the
+ * cleanup deletes).
+ */
+export async function validatedPhotoAttachments(
+  ctx: MutationCtx,
+  submitted:
+    | { storageId: Id<"_storage">; contentType: string }[]
+    | undefined,
+): Promise<Id<"_storage">[]> {
+  const photos: Id<"_storage">[] = [];
+  for (const photo of submitted ?? []) {
+    if (photos.includes(photo.storageId)) continue;
+    const metadata = await ctx.db.system.get(photo.storageId);
+    if (!metadata) continue;
+    const contentType = metadata.contentType ?? photo.contentType;
+    if (!isAllowedImageType(contentType) || metadata.size > MAX_PHOTO_BYTES) {
+      await ctx.storage.delete(photo.storageId);
+      continue;
+    }
+    photos.push(photo.storageId);
+  }
+  return photos;
+}
+
 /**
  * Submit the caller's fiche (back-office entrepreneur onboarding).
  *
@@ -321,11 +357,8 @@ export const getFormOptions = query({
  * strict schema validators on insert.
  *
  * `photos` are optional pre-uploaded blobs (see `generateSubmissionUploadUrl`),
- * each as `{ storageId, contentType }` like `addPhoto`: the blob is validated
- * (image type + size cap, storage-recorded type winning over the client-declared
- * one); a rejected or unknown blob is deleted/skipped rather than failing the
- * whole submission, and duplicates are dropped. Their order is the vitrine
- * order (first = Portada).
+ * validated by `validatedPhotoAttachments`; their order is the vitrine order
+ * (first = Portada).
  */
 export const submitCommerce = mutation({
   args: {
@@ -340,14 +373,7 @@ export const submitCommerce = mutation({
     contactName: v.optional(v.string()),
     resides: v.string(),
     notas: v.optional(v.string()),
-    photos: v.optional(
-      v.array(
-        v.object({
-          storageId: v.id("_storage"),
-          contentType: v.string(),
-        }),
-      ),
-    ),
+    photos: v.optional(v.array(submittedPhotoValidator)),
   },
   handler: async (ctx, args) => {
     const { userId, user } = await requireAuthenticated(ctx);
@@ -373,22 +399,7 @@ export const submitCommerce = mutation({
       });
     }
 
-    // Validate the pre-uploaded photos (same rules as `addPhoto`, the
-    // storage-recorded content type winning over the client-declared one).
-    // Rejected blobs are deleted and skipped — never failing the submission —
-    // which is why this must not throw (a throw would roll back the deletes).
-    const photos: Id<"_storage">[] = [];
-    for (const photo of args.photos ?? []) {
-      if (photos.includes(photo.storageId)) continue;
-      const metadata = await ctx.db.system.get(photo.storageId);
-      if (!metadata) continue;
-      const contentType = metadata.contentType ?? photo.contentType;
-      if (!isAllowedImageType(contentType) || metadata.size > MAX_PHOTO_BYTES) {
-        await ctx.storage.delete(photo.storageId);
-        continue;
-      }
-      photos.push(photo.storageId);
-    }
+    const photos = await validatedPhotoAttachments(ctx, args.photos);
 
     const commerceId = await ctx.db.insert("commerces", {
       ...commerceWriteFields(args),
@@ -408,26 +419,29 @@ export const submitCommerce = mutation({
 });
 
 /**
- * Upload URL for the fiche wizard's photos. The Commerce does not exist yet at
- * submission time, so ownership cannot be checked — instead any authenticated
- * account WITHOUT a fiche may mint one (mirror of the `submitCommerce` 1:1
- * precondition). The wizard POSTs each (client-compressed) image here and
- * passes the returned storage ids to `submitCommerce`, which validates every
- * blob before attaching it.
+ * Upload URL for the photos of a fiche that does not exist yet, so ownership
+ * cannot be checked: the entrepreneur wizard (`submitCommerce`) and the admin
+ * seeded-account creation (`createSeededEntreprise`). A Super admin may always
+ * mint one; anyone else must be authenticated WITHOUT a fiche (mirror of the
+ * `submitCommerce` 1:1 precondition). The form POSTs each (client-compressed)
+ * image here and passes the returned storage ids to the creation mutation,
+ * which validates every blob before attaching it.
  */
 export const generateSubmissionUploadUrl = mutation({
   args: {},
   handler: async (ctx) => {
-    const { userId } = await requireAuthenticated(ctx);
-    const existing = await ctx.db
-      .query("commerces")
-      .withIndex("by_owner", (q) => q.eq("ownerId", userId))
-      .first();
-    if (existing) {
-      throw new ConvexError({
-        message:
-          "Ya tienes un negocio registrado. Cada cuenta gestiona un solo negocio.",
-      });
+    const { userId, user } = await requireAuthenticated(ctx);
+    if (user.role !== "admin") {
+      const existing = await ctx.db
+        .query("commerces")
+        .withIndex("by_owner", (q) => q.eq("ownerId", userId))
+        .first();
+      if (existing) {
+        throw new ConvexError({
+          message:
+            "Ya tienes un negocio registrado. Cada cuenta gestiona un solo negocio.",
+        });
+      }
     }
     return await ctx.storage.generateUploadUrl();
   },

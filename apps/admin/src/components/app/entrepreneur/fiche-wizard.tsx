@@ -14,7 +14,6 @@ import {
   IconPhoto,
 } from "@tabler/icons-react";
 import { api } from "@packages/backend/convex/_generated/api";
-import type { Id } from "@packages/backend/convex/_generated/dataModel";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -37,7 +36,10 @@ import {
   PhotoPicker,
   type PickedPhoto,
 } from "@/components/app/entrepreneur/photo-picker";
-import { compressImage } from "@/lib/photo-upload";
+import {
+  uploadCompressedPhoto,
+  type UploadedPhoto,
+} from "@/lib/photo-upload";
 
 const formSchema = z.object({
   name: z.string().min(1, "El nombre del negocio es obligatorio."),
@@ -108,27 +110,6 @@ export function FicheWizard() {
     );
   }
 
-  /** Compress + upload one picked photo, returning its storage reference. */
-  async function uploadPhoto(
-    photo: PickedPhoto,
-  ): Promise<{ storageId: Id<"_storage">; contentType: string }> {
-    const blob = await compressImage(photo.file);
-    const contentType = blob.type || photo.file.type;
-    const uploadUrl = await generateSubmissionUploadUrl();
-    const response = await fetch(uploadUrl, {
-      method: "POST",
-      headers: { "Content-Type": contentType },
-      body: blob,
-    });
-    if (!response.ok) {
-      throw new Error(`No se pudo subir "${photo.file.name}".`);
-    }
-    const { storageId } = (await response.json()) as {
-      storageId: Id<"_storage">;
-    };
-    return { storageId, contentType };
-  }
-
   async function onSubmit(data: FormValues) {
     setFormError(null);
 
@@ -146,10 +127,15 @@ export function FicheWizard() {
 
     // Upload the picked photos now (selection order = vitrine order) so the
     // fiche sent for approval already carries them.
-    const photoIds: { storageId: Id<"_storage">; contentType: string }[] = [];
+    const photoIds: UploadedPhoto[] = [];
     try {
       for (const photo of photos) {
-        photoIds.push(await uploadPhoto(photo));
+        photoIds.push(
+          await uploadCompressedPhoto(
+            () => generateSubmissionUploadUrl(),
+            photo.file,
+          ),
+        );
       }
     } catch (error) {
       setFormError(

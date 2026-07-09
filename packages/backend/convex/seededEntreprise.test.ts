@@ -41,6 +41,18 @@ async function asAdmin(t: ReturnType<typeof convexTest>) {
   return { adminId, admin: t.withIdentity({ subject: adminId }) };
 }
 
+/** Store a blob in Convex storage and return its id (defaults: 1 KB image). */
+async function storeImage(
+  t: ReturnType<typeof convexTest>,
+  opts?: { type?: string; bytes?: number },
+): Promise<Id<"_storage">> {
+  const type = opts?.type ?? "image/jpeg";
+  const bytes = opts?.bytes ?? 1024;
+  return await t.run((ctx) =>
+    ctx.storage.store(new Blob([new Uint8Array(bytes)], { type })),
+  );
+}
+
 // ---------------------------------------------------------------------------
 // generateStrongPassword — strong, single-use, non-persisted credential.
 // ---------------------------------------------------------------------------
@@ -176,6 +188,78 @@ describe("createSeededEntreprise — cuenta y ficha", () => {
 // ---------------------------------------------------------------------------
 // Login funciona con la contraseña generada; el secreto nunca en claro.
 // ---------------------------------------------------------------------------
+
+describe("createSeededEntreprise — fotos a la creación", () => {
+  test("adjunta las fotos pre-subidas en orden (primera = Portada)", async () => {
+    const t = convexTest(schema, modules);
+    const { admin } = await asAdmin(t);
+    const first = await storeImage(t);
+    const second = await storeImage(t);
+
+    await admin.mutation(api.table.seededEntreprise.createSeededEntreprise, {
+      email: "confotos@example.com",
+      ...validFiche,
+      photos: [
+        { storageId: first, contentType: "image/jpeg" },
+        { storageId: second, contentType: "image/jpeg" },
+      ],
+    });
+
+    const commerce = await t.run((ctx) =>
+      ctx.db.query("commerces").first(),
+    );
+    expect(commerce?.photos).toEqual([first, second]);
+    expect(commerce?.estado).toBe("publicado");
+  });
+
+  test("ignora y elimina un blob no-imagen o demasiado pesado, conserva los válidos", async () => {
+    const t = convexTest(schema, modules);
+    const { admin } = await asAdmin(t);
+    const valid = await storeImage(t);
+    const notImage = await storeImage(t, { type: "application/pdf" });
+
+    await admin.mutation(api.table.seededEntreprise.createSeededEntreprise, {
+      email: "fotos-invalidas@example.com",
+      ...validFiche,
+      photos: [
+        { storageId: notImage, contentType: "application/pdf" },
+        { storageId: valid, contentType: "image/jpeg" },
+      ],
+    });
+
+    const commerce = await t.run((ctx) =>
+      ctx.db.query("commerces").first(),
+    );
+    expect(commerce?.photos).toEqual([valid]);
+    expect(await t.run((ctx) => ctx.db.system.get(notImage))).toBeNull();
+  });
+
+  test("un Super admin obtiene una URL de subida aunque posea su propia ficha", async () => {
+    const t = convexTest(schema, modules);
+    const { adminId, admin } = await asAdmin(t);
+    // The admin owns a fiche of their own — the 1:1 mirror must not block the
+    // seeded-account flow for them.
+    await t.run(async (ctx) => {
+      await ctx.db.insert("commerces", {
+        name: "Ficha del admin",
+        category: "Otro",
+        description: "Ficha propia del admin.",
+        searchText: "ficha del admin otro ficha propia del admin.",
+        whatsapp: "3000000001",
+        photos: [],
+        resides: "Resido en Monteazul",
+        estado: "publicado",
+        ownerId: adminId,
+      });
+    });
+
+    const url = await admin.mutation(
+      api.table.commerces.generateSubmissionUploadUrl,
+      {},
+    );
+    expect(typeof url).toBe("string");
+  });
+});
 
 describe("createSeededEntreprise — credenciales", () => {
   test("la contraseña devuelta es fuerte y permite iniciar sesión", async () => {

@@ -9,6 +9,10 @@ import {
   createSeededPasswordAccount,
   generateStrongPassword,
 } from "../lib/auth/seededAccount";
+import {
+  submittedPhotoValidator,
+  validatedPhotoAttachments,
+} from "./commerces";
 import { requireAdmin } from "../rbac";
 
 /**
@@ -46,6 +50,9 @@ export const createSeededEntreprise = mutation({
     contactName: v.optional(v.string()),
     resides: v.string(),
     notas: v.optional(v.string()),
+    // Pre-uploaded vitrine photos (see `generateSubmissionUploadUrl`), same
+    // contract and validation as `submitCommerce` — order = vitrine order.
+    photos: v.optional(v.array(submittedPhotoValidator)),
   },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
@@ -87,10 +94,12 @@ export const createSeededEntreprise = mutation({
       role: "entreprise",
     });
 
+    const photos = await validatedPhotoAttachments(ctx, args.photos);
+
     // Admin-created fiches are published directly (no approval queue).
     await ctx.db.insert("commerces", {
       ...commerceWriteFields(args),
-      photos: [],
+      photos,
       estado: "publicado",
       ownerId,
     });
