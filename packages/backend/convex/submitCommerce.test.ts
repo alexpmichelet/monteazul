@@ -2,6 +2,7 @@ import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import { MAX_PHOTO_BYTES } from "./lib/photos";
 import { requireCommerceOwner } from "./rbac";
 import schema from "./schema";
 
@@ -30,6 +31,18 @@ async function makeAccount(
 ): Promise<Id<"users">> {
   return await t.run((ctx) =>
     ctx.db.insert("users", { email, role: "user" }),
+  );
+}
+
+/** Store a blob in Convex storage and return its id (defaults: 1 KB image). */
+async function storeImage(
+  t: ReturnType<typeof convexTest>,
+  opts?: { type?: string; bytes?: number },
+): Promise<Id<"_storage">> {
+  const type = opts?.type ?? "image/jpeg";
+  const bytes = opts?.bytes ?? 1024;
+  return await t.run((ctx) =>
+    ctx.storage.store(new Blob([new Uint8Array(bytes)], { type })),
   );
 }
 
@@ -147,6 +160,98 @@ describe("submitCommerce — validation des champs", () => {
     expect(user?.role).toBe("user");
     const all = await t.run((ctx) => ctx.db.query("commerces").collect());
     expect(all).toHaveLength(0);
+  });
+});
+
+describe("submitCommerce — photos à la soumission", () => {
+  test("attache les photos pré-uploadées dans l'ordre (première = Portada)", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await makeAccount(t, "fotos@example.com");
+    const first = await storeImage(t);
+    const second = await storeImage(t);
+
+    const commerceId = await t
+      .withIdentity({ subject: userId })
+      .mutation(api.table.commerces.submitCommerce, {
+        ...validArgs,
+        photos: [
+          { storageId: first, contentType: "image/jpeg" },
+          { storageId: second, contentType: "image/jpeg" },
+        ],
+      });
+
+    const commerce = await t.run((ctx) => ctx.db.get(commerceId));
+    expect(commerce?.photos).toEqual([first, second]);
+    expect(commerce?.estado).toBe("pendiente");
+  });
+
+  test("ignore et supprime un blob non-image ou trop lourd, garde les valides", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await makeAccount(t, "fotos-invalides@example.com");
+    const valid = await storeImage(t);
+    const notImage = await storeImage(t, { type: "application/pdf" });
+    const tooBig = await storeImage(t, { bytes: MAX_PHOTO_BYTES + 1 });
+
+    const commerceId = await t
+      .withIdentity({ subject: userId })
+      .mutation(api.table.commerces.submitCommerce, {
+        ...validArgs,
+        photos: [
+          { storageId: notImage, contentType: "application/pdf" },
+          { storageId: valid, contentType: "image/jpeg" },
+          { storageId: tooBig, contentType: "image/jpeg" },
+          { storageId: valid, contentType: "image/jpeg" },
+        ],
+      });
+
+    // Only the valid blob is attached (deduped); the rejected ones are gone.
+    const commerce = await t.run((ctx) => ctx.db.get(commerceId));
+    expect(commerce?.photos).toEqual([valid]);
+    expect(await t.run((ctx) => ctx.db.system.get(notImage))).toBeNull();
+    expect(await t.run((ctx) => ctx.db.system.get(tooBig))).toBeNull();
+  });
+
+  test("une soumission sans photos crée la fiche avec une vitrine vide", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await makeAccount(t, "sinfotos@example.com");
+    const commerceId = await t
+      .withIdentity({ subject: userId })
+      .mutation(api.table.commerces.submitCommerce, validArgs);
+    const commerce = await t.run((ctx) => ctx.db.get(commerceId));
+    expect(commerce?.photos).toEqual([]);
+  });
+});
+
+describe("generateSubmissionUploadUrl — garde de soumission", () => {
+  test("délivre une URL d'upload à un compte authentifié sans fiche", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await makeAccount(t, "upload@example.com");
+    const url = await t
+      .withIdentity({ subject: userId })
+      .mutation(api.table.commerces.generateSubmissionUploadUrl, {});
+    expect(typeof url).toBe("string");
+    expect(url.length).toBeGreaterThan(0);
+  });
+
+  test("refuse un appelant anonyme", async () => {
+    const t = convexTest(schema, modules);
+    await expect(
+      t.mutation(api.table.commerces.generateSubmissionUploadUrl, {}),
+    ).rejects.toThrow();
+  });
+
+  test("refuse un compte qui possède déjà une fiche (1:1 strict)", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await makeAccount(t, "upload-owned@example.com");
+    await t
+      .withIdentity({ subject: userId })
+      .mutation(api.table.commerces.submitCommerce, validArgs);
+
+    await expect(
+      t
+        .withIdentity({ subject: userId })
+        .mutation(api.table.commerces.generateSubmissionUploadUrl, {}),
+    ).rejects.toThrow(/un solo negocio/i);
   });
 });
 

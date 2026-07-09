@@ -11,8 +11,10 @@ import {
   IconInfoCircle,
   IconMapPin,
   IconPhone,
+  IconPhoto,
 } from "@tabler/icons-react";
 import { api } from "@packages/backend/convex/_generated/api";
+import type { Id } from "@packages/backend/convex/_generated/dataModel";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -31,6 +33,11 @@ import {
   CommerceLocationFields,
 } from "@/components/app/commerces/commerce-fields";
 import { SectionTitle } from "@/components/app/commerces/section-title";
+import {
+  PhotoPicker,
+  type PickedPhoto,
+} from "@/components/app/entrepreneur/photo-picker";
+import { compressImage } from "@/lib/photo-upload";
 
 const formSchema = z.object({
   name: z.string().min(1, "El nombre del negocio es obligatorio."),
@@ -54,19 +61,26 @@ type FormValues = z.infer<typeof formSchema>;
 /**
  * The entrepreneur fiche wizard (back-office onboarding). Same sectioned card
  * design as « Mi negocio » — Información básica, Contacto, Horario, Ubicación
- * y detalles — built from the shared `Commerce*Fields` groups, with the Comida
- * sub-categories only for « Comida y bebida » and the structured Horario
- * editor. On submit it calls the real `submitCommerce` mutation, surfaces
- * validation errors inline, and redirects to « Mi negocio ».
+ * y detalles, plus a Fotos card — built from the shared `Commerce*Fields`
+ * groups, with the Comida sub-categories only for « Comida y bebida » and the
+ * structured Horario editor. Photos are picked locally and only uploaded at
+ * submission (compress → `generateSubmissionUploadUrl` → POST), so the fiche
+ * sent for approval already carries its vitrine. On submit it calls the real
+ * `submitCommerce` mutation, surfaces validation errors inline, and redirects
+ * to « Mi negocio ».
  */
 export function FicheWizard() {
   const router = useRouter();
   const options = useQuery(api.table.commerces.getFormOptions);
   const submitCommerce = useMutation(api.table.commerces.submitCommerce);
+  const generateSubmissionUploadUrl = useMutation(
+    api.table.commerces.generateSubmissionUploadUrl,
+  );
 
   const [subcategories, setSubcategories] = React.useState<string[]>([]);
   const [horario, setHorario] = React.useState<Horario>(DEFAULT_HORARIO);
   const [horarioError, setHorarioError] = React.useState<string | null>(null);
+  const [photos, setPhotos] = React.useState<PickedPhoto[]>([]);
   const [formError, setFormError] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
 
@@ -94,6 +108,27 @@ export function FicheWizard() {
     );
   }
 
+  /** Compress + upload one picked photo, returning its storage reference. */
+  async function uploadPhoto(
+    photo: PickedPhoto,
+  ): Promise<{ storageId: Id<"_storage">; contentType: string }> {
+    const blob = await compressImage(photo.file);
+    const contentType = blob.type || photo.file.type;
+    const uploadUrl = await generateSubmissionUploadUrl();
+    const response = await fetch(uploadUrl, {
+      method: "POST",
+      headers: { "Content-Type": contentType },
+      body: blob,
+    });
+    if (!response.ok) {
+      throw new Error(`No se pudo subir "${photo.file.name}".`);
+    }
+    const { storageId } = (await response.json()) as {
+      storageId: Id<"_storage">;
+    };
+    return { storageId, contentType };
+  }
+
   async function onSubmit(data: FormValues) {
     setFormError(null);
 
@@ -108,6 +143,25 @@ export function FicheWizard() {
     const subcats = isComida ? subcategories : [];
 
     setIsLoading(true);
+
+    // Upload the picked photos now (selection order = vitrine order) so the
+    // fiche sent for approval already carries them.
+    const photoIds: { storageId: Id<"_storage">; contentType: string }[] = [];
+    try {
+      for (const photo of photos) {
+        photoIds.push(await uploadPhoto(photo));
+      }
+    } catch (error) {
+      setFormError(
+        getConvexErrorMessage(
+          error,
+          "No se pudieron subir las fotos. Revisa tu conexión e inténtalo de nuevo.",
+        ),
+      );
+      setIsLoading(false);
+      return;
+    }
+
     try {
       await submitCommerce({
         name: data.name,
@@ -121,6 +175,7 @@ export function FicheWizard() {
         contactName: data.contactName || undefined,
         resides: data.resides,
         notas: data.notas || undefined,
+        photos: photoIds.length > 0 ? photoIds : undefined,
       });
       router.push("/mi-negocio");
     } catch (error) {
@@ -229,6 +284,21 @@ export function FicheWizard() {
                 options={options}
               />
             </FieldGroup>
+          </CardContent>
+        </Card>
+
+        {/* Fotos — picked locally, uploaded at submission. */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <SectionTitle
+              icon={IconPhoto}
+              accent="bg-indigo-100 text-indigo-700"
+            >
+              Fotos del negocio
+            </SectionTitle>
+          </CardHeader>
+          <CardContent>
+            <PhotoPicker value={photos} onChange={setPhotos} />
           </CardContent>
         </Card>
 
