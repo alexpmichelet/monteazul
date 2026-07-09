@@ -278,7 +278,16 @@ export const PRIVACIDAD = {
       ],
     },
     {
-      heading: "7. Derechos de los titulares",
+      heading: "7. Transferencia internacional de datos",
+      blocks: [
+        {
+          type: "p",
+          text: "Para el funcionamiento de la Plataforma, algunos datos se almacenan y procesan en servidores ubicados fuera de Colombia, a través del proveedor tecnológico Convex, cuyos servidores pueden estar localizados en otros países (como Estados Unidos). Al aceptar esta Política, el usuario autoriza expresamente dicha transferencia y transmisión internacional de sus datos. La Administradora procura que estos proveedores ofrezcan niveles adecuados de seguridad y protección conforme a la normativa colombiana aplicable.",
+        },
+      ],
+    },
+    {
+      heading: "8. Derechos de los titulares",
       blocks: [
         {
           type: "p",
@@ -301,7 +310,7 @@ export const PRIVACIDAD = {
       ],
     },
     {
-      heading: "8. Conservación de los datos",
+      heading: "9. Conservación de los datos",
       blocks: [
         {
           type: "p",
@@ -310,7 +319,7 @@ export const PRIVACIDAD = {
       ],
     },
     {
-      heading: "9. Menores de edad",
+      heading: "10. Menores de edad",
       blocks: [
         {
           type: "p",
@@ -319,7 +328,7 @@ export const PRIVACIDAD = {
       ],
     },
     {
-      heading: "10. Cambios en la Política",
+      heading: "11. Cambios en la Política",
       blocks: [
         {
           type: "p",
@@ -328,7 +337,7 @@ export const PRIVACIDAD = {
       ],
     },
     {
-      heading: "11. Contacto",
+      heading: "12. Contacto",
       blocks: [
         {
           type: "p",
