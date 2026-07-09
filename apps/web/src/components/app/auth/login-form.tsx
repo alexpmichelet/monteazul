@@ -12,6 +12,7 @@ import {
   // FieldSeparator, // Google sign-in désactivé dans l'UI (voir plus bas)
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { PasswordInput } from "@/components/custom/password-input";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -30,6 +31,10 @@ const formSchema = z.object({
     .min(1, "El correo es obligatorio")
     .email("Ingresa un correo válido"),
   password: z.string().min(1, "La contraseña es obligatoria"),
+  acceptTerms: z.boolean().refine((value) => value, {
+    message:
+      "Debes aceptar los Términos y Condiciones y la Política de Privacidad.",
+  }),
 });
 
 export function LoginForm({
@@ -46,6 +51,7 @@ export function LoginForm({
     defaultValues: {
       email: "",
       password: "",
+      acceptTerms: false,
     },
   });
 
@@ -150,6 +156,54 @@ export function LoginForm({
                       aria-invalid={fieldState.invalid}
                       required
                     />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+              <Controller
+                name="acceptTerms"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <div className="flex items-start gap-2">
+                      <Checkbox
+                        id="acceptTerms"
+                        checked={field.value}
+                        onCheckedChange={(checked) =>
+                          field.onChange(checked === true)
+                        }
+                        aria-invalid={fieldState.invalid}
+                        className="mt-0.5"
+                      />
+                      <FieldLabel
+                        htmlFor="acceptTerms"
+                        className="text-sm font-normal leading-snug"
+                      >
+                        <span>
+                          He leído y acepto los{" "}
+                          <a
+                            href="/terminos"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-semibold underline underline-offset-4"
+                          >
+                            Términos y Condiciones
+                          </a>{" "}
+                          y la{" "}
+                          <a
+                            href="/privacidad"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-semibold underline underline-offset-4"
+                          >
+                            Política de Privacidad
+                          </a>
+                          .
+                        </span>
+                      </FieldLabel>
+                    </div>
                     {fieldState.invalid && (
                       <FieldError errors={[fieldState.error]} />
                     )}
