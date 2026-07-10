@@ -138,8 +138,8 @@ export function OTPForm({ className, email, ...props }: OTPFormProps) {
         </CardContent>
       </Card>
       <FieldDescription className="text-center">
-        Al continuar, aceptas nuestros <a href="#">Términos de servicio</a> y
-        nuestra <a href="#">Política de privacidad</a>.
+        Al continuar, aceptas los <a href="/terminos">Términos y Condiciones</a> y
+        la <a href="/privacidad">Política de Privacidad</a>.
       </FieldDescription>
     </div>
   )
