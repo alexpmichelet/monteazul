@@ -84,7 +84,7 @@ const navGroups: NavGroup[] = [
     title: "General",
     defaultOpen: true,
     items: [
-      { label: "Users", icon: IconUsersGroup, href: "/users" },
+      { label: "Usuarios", icon: IconUsersGroup, href: "/users" },
       // "Team" (admin management) is disabled for the MVP — new admins are
       // seeded manually in the DB. Re-add here to bring the flow back.
     ],
@@ -225,7 +225,7 @@ const NavUser = ({
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={handleLogout}>
               <IconLogout className="mr-2 size-4" />
-              Log out
+              Cerrar sesión
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -257,15 +257,15 @@ const AppSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) => {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild tooltip="Admin Panel">
+            <SidebarMenuButton size="lg" asChild tooltip="Directorio Monteazul">
               <Link href="/negocios">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-sm bg-primary">
                   <IconInnerShadowTop className="size-5 text-primary-foreground" />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-medium">Admin Panel</span>
+                  <span className="font-medium">Directorio Monteazul</span>
                   <span className="text-xs text-muted-foreground">
-                    Management
+                    Administración
                   </span>
                 </div>
               </Link>

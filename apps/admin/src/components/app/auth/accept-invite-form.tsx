@@ -24,11 +24,13 @@ import { Spinner } from "@/components/ui/spinner";
 
 const formSchema = z
   .object({
-    password: z.string().min(8, "Password must be at least 8 characters"),
-    confirmPassword: z.string().min(1, "Please confirm your password"),
+    password: z
+      .string()
+      .min(8, "La contraseña debe tener al menos 8 caracteres."),
+    confirmPassword: z.string().min(1, "Confirma tu contraseña."),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
+    message: "Las contraseñas no coinciden.",
     path: ["confirmPassword"],
   });
 
@@ -73,7 +75,7 @@ export function AcceptInviteForm({
       // Accept the invite (sets role to admin)
       await acceptInvite({ token });
 
-      // Redirect to the admin home ("/" forwards to /team).
+      // Redirect to the admin home ("/" forwards to /negocios).
       router.replace("/");
     } catch (error) {
       setFormError(getConvexErrorMessage(error));
@@ -99,14 +101,14 @@ export function AcceptInviteForm({
           <CardContent className="p-6 md:p-8">
             <div className="flex flex-col items-center gap-4 text-center">
               <h1 className="text-2xl font-bold text-destructive">
-                Invalid Invitation
+                Invitación no válida
               </h1>
               <p className="text-muted-foreground">
-                This invitation link is invalid, expired, or has already been
-                used.
+                Este enlace de invitación no es válido, ha caducado o ya se ha
+                utilizado.
               </p>
-              <Button variant="outline" onClick={() => router.push("/login")}>
-                Go to Login
+              <Button variant="outline" onClick={() => router.push("/acceso")}>
+                Ir al inicio de sesión
               </Button>
             </div>
           </CardContent>
@@ -122,10 +124,13 @@ export function AcceptInviteForm({
           <form id="form-accept-invite" onSubmit={form.handleSubmit(onSubmit)}>
             <FieldGroup>
               <div className="flex flex-col items-center gap-2 text-center">
-                <h1 className="text-2xl font-bold">Welcome, {invite.invite.name}!</h1>
+                <h1 className="text-2xl font-bold">
+                  ¡Bienvenido/a, {invite.invite.name}!
+                </h1>
                 <p className="text-muted-foreground text-balance">
-                  You&apos;ve been invited to join the admin team
-                  {invite.inviterName && ` by ${invite.inviterName}`}.
+                  Has recibido una invitación para unirte al equipo de
+                  administración
+                  {invite.inviterName && ` de parte de ${invite.inviterName}`}.
                 </p>
               </div>
 
@@ -136,7 +141,7 @@ export function AcceptInviteForm({
               )}
 
               <Field>
-                <FieldLabel>Email</FieldLabel>
+                <FieldLabel>Correo</FieldLabel>
                 <div className="text-muted-foreground text-sm">
                   {invite.invite.email}
                 </div>
@@ -147,12 +152,12 @@ export function AcceptInviteForm({
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="password">Password</FieldLabel>
+                    <FieldLabel htmlFor="password">Contraseña</FieldLabel>
                     <PasswordInput
                       {...field}
                       id="password"
                       aria-invalid={fieldState.invalid}
-                      placeholder="Create a password"
+                      placeholder="Crea una contraseña"
                       required
                     />
                     {fieldState.invalid && (
@@ -168,13 +173,13 @@ export function AcceptInviteForm({
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="confirmPassword">
-                      Confirm Password
+                      Confirmar contraseña
                     </FieldLabel>
                     <PasswordInput
                       {...field}
                       id="confirmPassword"
                       aria-invalid={fieldState.invalid}
-                      placeholder="Confirm your password"
+                      placeholder="Confirma tu contraseña"
                       required
                     />
                     {fieldState.invalid && (
@@ -190,14 +195,14 @@ export function AcceptInviteForm({
                   form="form-accept-invite"
                   disabled={isLoading}
                 >
-                  {isLoading ? <Spinner /> : "Create Account"}
+                  {isLoading ? <Spinner /> : "Crear cuenta"}
                 </Button>
               </Field>
 
               <FieldDescription className="text-center">
-                By creating an account, you agree to our{" "}
-                <a href="#">Terms of Service</a> and{" "}
-                <a href="#">Privacy Policy</a>.
+                Al crear una cuenta, aceptas los{" "}
+                <a href="/terminos">Términos y Condiciones</a> y la{" "}
+                <a href="/privacidad">Política de Privacidad</a>.
               </FieldDescription>
             </FieldGroup>
           </form>

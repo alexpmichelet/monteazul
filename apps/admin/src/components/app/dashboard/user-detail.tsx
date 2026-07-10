@@ -104,10 +104,10 @@ export function UserDetail({ userId, backPath = "/team" }: UserDetailProps) {
           role: data.role,
         },
       });
-      toast.success("User updated successfully");
+      toast.success("Usuario actualizado");
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to update user"
+        error instanceof Error ? error.message : "No se pudo actualizar el usuario."
       );
     } finally {
       setIsSubmitting(false);
@@ -118,11 +118,11 @@ export function UserDetail({ userId, backPath = "/team" }: UserDetailProps) {
     setIsDeleting(true);
     try {
       await deleteUser({ userId });
-      toast.success("User deleted successfully");
+      toast.success("Usuario eliminado");
       router.push(backPath);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to delete user"
+        error instanceof Error ? error.message : "No se pudo eliminar el usuario."
       );
       setIsDeleting(false);
     }
@@ -142,13 +142,13 @@ export function UserDetail({ userId, backPath = "/team" }: UserDetailProps) {
         banReason: banReason || undefined,
         banExpiresIn: durationMap[banDuration],
       });
-      toast.success("User has been banned");
+      toast.success("Usuario bloqueado");
       setBanDialogOpen(false);
       setBanReason("");
       setBanDuration("permanent");
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to ban user"
+        error instanceof Error ? error.message : "No se pudo bloquear al usuario."
       );
     } finally {
       setIsBanning(false);
@@ -159,10 +159,10 @@ export function UserDetail({ userId, backPath = "/team" }: UserDetailProps) {
     setIsUnbanning(true);
     try {
       await unbanUser({ userId });
-      toast.success("User has been unbanned");
+      toast.success("Usuario desbloqueado");
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to unban user"
+        error instanceof Error ? error.message : "No se pudo desbloquear al usuario."
       );
     } finally {
       setIsUnbanning(false);
@@ -173,7 +173,7 @@ export function UserDetail({ userId, backPath = "/team" }: UserDetailProps) {
     user?.banned && (!user.banExpires || user.banExpires > Date.now());
 
   const formatDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleDateString("en-US", {
+    return new Date(timestamp).toLocaleDateString("es-ES", {
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -193,10 +193,10 @@ export function UserDetail({ userId, backPath = "/team" }: UserDetailProps) {
   if (user === null) {
     return (
       <div className="flex h-64 flex-col items-center justify-center gap-4">
-        <p className="text-muted-foreground">User not found</p>
+        <p className="text-muted-foreground">Usuario no encontrado</p>
         <Button variant="outline" onClick={() => router.push(backPath)}>
           <IconArrowLeft className="mr-2 h-4 w-4" />
-          Back
+          Volver
         </Button>
       </div>
     );
@@ -213,14 +213,14 @@ export function UserDetail({ userId, backPath = "/team" }: UserDetailProps) {
           <IconArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold">{user.name || "Unnamed User"}</h1>
+          <h1 className="text-2xl font-bold">{user.name || "Usuario sin nombre"}</h1>
           <p className="text-muted-foreground text-sm">{user.email}</p>
         </div>
         <div className="flex items-center gap-2">
           {isBanned && (
             <Badge variant="destructive">
               <IconBan className="mr-1 h-3 w-3" />
-              Banned
+              Bloqueado
             </Badge>
           )}
           <Badge
@@ -241,30 +241,30 @@ export function UserDetail({ userId, backPath = "/team" }: UserDetailProps) {
         {/* User Info Card */}
         <Card>
           <CardHeader>
-            <CardTitle>User Information</CardTitle>
+            <CardTitle>Información del usuario</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="text-muted-foreground">Created</span>
+                <span className="text-muted-foreground">Fecha de alta</span>
                 <p className="font-medium">{formatDate(user._creationTime)}</p>
               </div>
               <div>
-                <span className="text-muted-foreground">Email Verified</span>
+                <span className="text-muted-foreground">Correo verificado</span>
                 <p className="font-medium">
                   {user.emailVerificationTime
                     ? formatDate(user.emailVerificationTime)
-                    : "Not verified"}
+                    : "Sin verificar"}
                 </p>
               </div>
               <div>
-                <span className="text-muted-foreground">Phone</span>
-                <p className="font-medium">{user.phone || "Not set"}</p>
+                <span className="text-muted-foreground">Teléfono</span>
+                <p className="font-medium">{user.phone || "Sin especificar"}</p>
               </div>
               <div>
                 <span className="text-muted-foreground">Onboarding</span>
                 <p className="font-medium">
-                  {user.hasCompletedOnboarding ? "Completed" : "Not completed"}
+                  {user.hasCompletedOnboarding ? "Completado" : "Sin completar"}
                 </p>
               </div>
             </div>
@@ -274,7 +274,7 @@ export function UserDetail({ userId, backPath = "/team" }: UserDetailProps) {
         {/* Edit Form Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Edit User</CardTitle>
+            <CardTitle>Editar usuario</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -283,8 +283,8 @@ export function UserDetail({ userId, backPath = "/team" }: UserDetailProps) {
                 control={form.control}
                 render={({ field }) => (
                   <div className="space-y-2">
-                    <Label htmlFor="name">Name</Label>
-                    <Input {...field} id="name" placeholder="User's name" />
+                    <Label htmlFor="name">Nombre</Label>
+                    <Input {...field} id="name" placeholder="Nombre del usuario" />
                   </div>
                 )}
               />
@@ -294,11 +294,11 @@ export function UserDetail({ userId, backPath = "/team" }: UserDetailProps) {
                 control={form.control}
                 render={({ field }) => (
                   <div className="space-y-2">
-                    <Label htmlFor="bio">Bio</Label>
+                    <Label htmlFor="bio">Biografía</Label>
                     <Textarea
                       {...field}
                       id="bio"
-                      placeholder="User's bio"
+                      placeholder="Biografía del usuario"
                       rows={3}
                     />
                   </div>
@@ -310,14 +310,14 @@ export function UserDetail({ userId, backPath = "/team" }: UserDetailProps) {
                 control={form.control}
                 render={({ field }) => (
                   <div className="space-y-2">
-                    <Label htmlFor="role">Role</Label>
+                    <Label htmlFor="role">Rol</Label>
                     <Select value={field.value} onValueChange={field.onChange}>
                       <SelectTrigger id="role">
-                        <SelectValue placeholder="Select role" />
+                        <SelectValue placeholder="Selecciona un rol" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="user">User</SelectItem>
-                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="user">Usuario</SelectItem>
+                        <SelectItem value="admin">Administrador</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -326,7 +326,7 @@ export function UserDetail({ userId, backPath = "/team" }: UserDetailProps) {
 
               <Button type="submit" disabled={isSubmitting} className="w-full">
                 {isSubmitting ? <Spinner className="mr-2 h-4 w-4" /> : null}
-                Save Changes
+                Guardar cambios
               </Button>
             </form>
           </CardContent>
@@ -337,26 +337,26 @@ export function UserDetail({ userId, backPath = "/team" }: UserDetailProps) {
       {user.role !== "admin" && (
         <Card className={isBanned ? "border-destructive" : ""}>
           <CardHeader>
-            <CardTitle>Moderation</CardTitle>
+            <CardTitle>Moderación</CardTitle>
           </CardHeader>
           <CardContent>
             {isBanned ? (
               <div className="space-y-4">
                 <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-4 space-y-2">
                   <p className="text-sm font-medium text-destructive">
-                    This user is currently banned
+                    Este usuario está bloqueado actualmente
                   </p>
                   {user.banReason && (
                     <p className="text-sm text-muted-foreground">
-                      <span className="font-medium">Reason:</span>{" "}
+                      <span className="font-medium">Motivo:</span>{" "}
                       {user.banReason}
                     </p>
                   )}
                   <p className="text-sm text-muted-foreground">
-                    <span className="font-medium">Expires:</span>{" "}
+                    <span className="font-medium">Expira:</span>{" "}
                     {user.banExpires
                       ? formatDate(user.banExpires)
-                      : "Permanent"}
+                      : "Permanente"}
                   </p>
                 </div>
                 <Button
@@ -369,16 +369,15 @@ export function UserDetail({ userId, backPath = "/team" }: UserDetailProps) {
                   ) : (
                     <IconLockOpen className="mr-2 h-4 w-4" />
                   )}
-                  Unban User
+                  Desbloquear usuario
                 </Button>
               </div>
             ) : (
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium">Ban User</p>
+                  <p className="font-medium">Bloquear usuario</p>
                   <p className="text-muted-foreground text-sm">
-                    Prevent this user from signing in and revoke all their
-                    sessions.
+                    Impide que este usuario inicie sesión y revoca todas sus sesiones.
                   </p>
                 </div>
                 <AlertDialog
@@ -388,54 +387,53 @@ export function UserDetail({ userId, backPath = "/team" }: UserDetailProps) {
                   <AlertDialogTrigger asChild>
                     <Button variant="destructive">
                       <IconBan className="mr-2 h-4 w-4" />
-                      Ban User
+                      Bloquear usuario
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Ban User</AlertDialogTitle>
+                      <AlertDialogTitle>Bloquear usuario</AlertDialogTitle>
                       <AlertDialogDescription>
-                        This will prevent the user from signing in and revoke all
-                        their active sessions immediately.
+                        El usuario no podrá iniciar sesión y todas sus sesiones activas se revocarán inmediatamente.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <div className="space-y-4 py-2">
                       <div className="space-y-2">
                         <Label htmlFor="ban-reason">
-                          Reason{" "}
+                          Motivo{" "}
                           <span className="text-muted-foreground">
-                            (optional)
+                            (opcional)
                           </span>
                         </Label>
                         <Input
                           id="ban-reason"
-                          placeholder="e.g. Spamming, Abuse, etc."
+                          placeholder="P. ej. spam, abuso, etc."
                           value={banReason}
                           onChange={(e) => setBanReason(e.target.value)}
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="ban-duration">Duration</Label>
+                        <Label htmlFor="ban-duration">Duración</Label>
                         <Select
                           value={banDuration}
                           onValueChange={setBanDuration}
                         >
                           <SelectTrigger id="ban-duration">
-                            <SelectValue placeholder="Select duration" />
+                            <SelectValue placeholder="Selecciona la duración" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="permanent">
-                              Permanent
+                              Permanente
                             </SelectItem>
-                            <SelectItem value="1d">1 day</SelectItem>
-                            <SelectItem value="7d">7 days</SelectItem>
-                            <SelectItem value="30d">30 days</SelectItem>
+                            <SelectItem value="1d">1 día</SelectItem>
+                            <SelectItem value="7d">7 días</SelectItem>
+                            <SelectItem value="30d">30 días</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                     </div>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={handleBan}
                         disabled={isBanning}
@@ -444,7 +442,7 @@ export function UserDetail({ userId, backPath = "/team" }: UserDetailProps) {
                         {isBanning ? (
                           <Spinner className="mr-2 h-4 w-4" />
                         ) : null}
-                        Confirm Ban
+                        Confirmar bloqueo
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
@@ -458,40 +456,38 @@ export function UserDetail({ userId, backPath = "/team" }: UserDetailProps) {
       {/* Danger Zone */}
       <Card className="border-destructive">
         <CardHeader>
-          <CardTitle className="text-destructive">Danger Zone</CardTitle>
+          <CardTitle className="text-destructive">Zona de peligro</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium">Delete User</p>
+              <p className="font-medium">Eliminar usuario</p>
               <p className="text-muted-foreground text-sm">
-                Permanently delete this user and all their data.
+                Elimina definitivamente a este usuario y todos sus datos.
               </p>
             </div>
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" disabled={isDeleting}>
                   <IconTrash className="mr-2 h-4 w-4" />
-                  Delete User
+                  Eliminar usuario
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Delete User</AlertDialogTitle>
+                  <AlertDialogTitle>Eliminar usuario</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Are you sure you want to delete this user? This action
-                    cannot be undone. All user data, sessions, and associated
-                    accounts will be permanently removed.
+                    ¿Seguro que quieres eliminar a este usuario? Esta acción no se puede deshacer: todos sus datos, sesiones y cuentas asociadas se eliminarán definitivamente.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleDelete}
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   >
                     {isDeleting ? <Spinner className="mr-2 h-4 w-4" /> : null}
-                    Delete
+                    Eliminar
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

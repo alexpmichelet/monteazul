@@ -30,8 +30,8 @@ import { Spinner } from "@/components/ui/spinner";
 import { getConvexErrorMessage } from "@/utils/getConvexErrorMessage";
 
 const formSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  name: z.string().min(1, "Name is required").min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Introduce un correo válido."),
+  name: z.string().min(1, "El nombre es obligatorio.").min(2, "El nombre debe tener al menos 2 caracteres."),
 });
 
 export function InviteDialog() {
@@ -57,14 +57,14 @@ export function InviteDialog() {
         name: data.name,
       });
 
-      toast.success("Invitation sent successfully", {
-        description: `An invitation email has been sent to ${data.email}`,
+      toast.success("Invitación enviada", {
+        description: `Se ha enviado un correo de invitación a ${data.email}`,
       });
 
       form.reset();
       setOpen(false);
     } catch (error) {
-      toast.error("Failed to send invitation", {
+      toast.error("No se pudo enviar la invitación", {
         description: getConvexErrorMessage(error),
       });
     } finally {
@@ -77,15 +77,14 @@ export function InviteDialog() {
       <DialogTrigger asChild>
         <Button>
           <IconUserPlus className="mr-2 h-4 w-4" />
-          Invite Member
+          Invitar miembro
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Invite Team Member</DialogTitle>
+          <DialogTitle>Invitar a un miembro del equipo</DialogTitle>
           <DialogDescription>
-            Send an invitation to join the admin team. They will receive an email with a link to
-            create their account.
+            Envía una invitación para unirse al equipo de administración. La persona recibirá un correo con un enlace para crear su cuenta.
           </DialogDescription>
         </DialogHeader>
 
@@ -96,11 +95,11 @@ export function InviteDialog() {
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="name">Name</FieldLabel>
+                  <FieldLabel htmlFor="name">Nombre</FieldLabel>
                   <Input
                     {...field}
                     id="name"
-                    placeholder="John Doe"
+                    placeholder="Ana García"
                     aria-invalid={fieldState.invalid}
                   />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -113,12 +112,12 @@ export function InviteDialog() {
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="email">Email</FieldLabel>
+                  <FieldLabel htmlFor="email">Correo</FieldLabel>
                   <Input
                     {...field}
                     id="email"
                     type="email"
-                    placeholder="john@example.com"
+                    placeholder="ana@example.com"
                     aria-invalid={fieldState.invalid}
                   />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -135,11 +134,11 @@ export function InviteDialog() {
             onClick={() => setOpen(false)}
             disabled={isLoading}
           >
-            Cancel
+            Cancelar
           </Button>
           <Button type="submit" form="invite-form" disabled={isLoading}>
             {isLoading ? <Spinner className="mr-2" /> : null}
-            Send Invitation
+            Enviar invitación
           </Button>
         </DialogFooter>
       </DialogContent>

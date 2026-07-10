@@ -34,16 +34,16 @@ function formatTimeRemaining(expiresAt: number): string {
   const diff = expiresAt - now;
 
   if (diff <= 0) {
-    return "Expired";
+    return "Caducada";
   }
 
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
   const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
 
   if (days > 0) {
-    return `${days}d ${hours}h remaining`;
+    return `Caduca en ${days} d ${hours} h`;
   }
-  return `${hours}h remaining`;
+  return `Caduca en ${hours} h`;
 }
 
 export function PendingInvites() {
@@ -60,9 +60,9 @@ export function PendingInvites() {
     setIsLoading(true);
     try {
       await cancelInvite({ inviteId: inviteToCancel });
-      toast.success("Invitation cancelled");
+      toast.success("Invitación cancelada");
     } catch (error) {
-      toast.error("Failed to cancel invitation", {
+      toast.error("No se pudo cancelar la invitación", {
         description: getConvexErrorMessage(error),
       });
     } finally {
@@ -87,10 +87,10 @@ export function PendingInvites() {
         <CardHeader className="pb-3">
           <CardTitle className="text-base font-medium flex items-center gap-2">
             <IconMail className="h-4 w-4" />
-            Pending Invitations
+            Invitaciones pendientes
           </CardTitle>
           <CardDescription>
-            {invites.length} pending invitation{invites.length !== 1 ? "s" : ""}
+            {invites.length} {invites.length !== 1 ? "invitaciones pendientes" : "invitación pendiente"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -111,7 +111,7 @@ export function PendingInvites() {
                   <span className="text-sm text-muted-foreground">{invite.email}</span>
                   {invite.inviterName && (
                     <span className="text-xs text-muted-foreground">
-                      Invited by {invite.inviterName}
+                      Invitación enviada por {invite.inviterName}
                     </span>
                   )}
                 </div>
@@ -125,7 +125,7 @@ export function PendingInvites() {
                   }}
                 >
                   <IconX className="h-4 w-4" />
-                  <span className="sr-only">Cancel invitation</span>
+                  <span className="sr-only">Cancelar invitación</span>
                 </Button>
               </div>
             ))}
@@ -136,20 +136,20 @@ export function PendingInvites() {
       <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Cancel Invitation</AlertDialogTitle>
+            <AlertDialogTitle>Cancelar invitación</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to cancel this invitation? The invite link will no longer work.
+              ¿Seguro que quieres cancelar esta invitación? El enlace dejará de funcionar.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isLoading}>Keep Invitation</AlertDialogCancel>
+            <AlertDialogCancel disabled={isLoading}>Mantener la invitación</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleCancel}
               disabled={isLoading}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {isLoading ? <Spinner className="mr-2" /> : null}
-              Cancel Invitation
+              Cancelar invitación
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

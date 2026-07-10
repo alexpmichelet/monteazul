@@ -99,7 +99,7 @@ function getAvatarColor(name: string | undefined): string {
 }
 
 function formatDate(timestamp: number): string {
-  return new Date(timestamp).toLocaleDateString("en-US", {
+  return new Date(timestamp).toLocaleDateString("es-ES", {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -120,9 +120,9 @@ export function AdminTable() {
     if (!userToDelete) return;
     try {
       await deleteUser({ userId: userToDelete });
-      toast.success("Team member removed successfully");
+      toast.success("Miembro del equipo eliminado");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to remove team member");
+      toast.error(error instanceof Error ? error.message : "No se pudo eliminar al miembro del equipo.");
     } finally {
       setDeleteDialogOpen(false);
       setUserToDelete(null);
@@ -147,14 +147,14 @@ export function AdminTable() {
       },
       {
         accessorKey: "name",
-        header: "Name",
+        header: "Nombre",
         cell: ({ row }) => (
           <span className="font-medium">{row.original.name || "—"}</span>
         ),
       },
       {
         accessorKey: "email",
-        header: "Email",
+        header: "Correo",
         cell: ({ row }) => (
           <Link
             href={`mailto:${row.original.email}`}
@@ -167,23 +167,23 @@ export function AdminTable() {
       },
       {
         id: "status",
-        header: "Status",
+        header: "Estado",
         cell: ({ row }) =>
           row.original.emailVerificationTime ? (
             <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700">
               <span className="mr-1.5 h-1.5 w-1.5 rounded-full bg-green-500" />
-              Active
+              Activo
             </Badge>
           ) : (
             <Badge variant="outline" className="border-gray-200 bg-gray-50 text-gray-600">
               <span className="mr-1.5 h-1.5 w-1.5 rounded-full bg-gray-400" />
-              Inactive
+              Inactivo
             </Badge>
           ),
       },
       {
         accessorKey: "_creationTime",
-        header: "Joined",
+        header: "Alta",
         cell: ({ row }) => (
           <span className="text-muted-foreground">{formatDate(row.original._creationTime)}</span>
         ),
@@ -200,14 +200,14 @@ export function AdminTable() {
                 onClick={(e) => e.stopPropagation()}
               >
                 <IconDotsVertical />
-                <span className="sr-only">Open menu</span>
+                <span className="sr-only">Abrir menú</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
               <DropdownMenuItem asChild>
                 <Link href={`/team/${row.original._id}`}>
                   <IconEdit className="mr-2 h-4 w-4" />
-                  Edit
+                  Editar
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -219,7 +219,7 @@ export function AdminTable() {
                 }}
               >
                 <IconTrash className="mr-2 h-4 w-4" />
-                Remove
+                Eliminar
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -254,11 +254,11 @@ export function AdminTable() {
   return (
     <>
       <div className="mb-4">
-        <h2 className="text-lg font-semibold mb-2">Team Members</h2>
+        <h2 className="text-lg font-semibold mb-2">Miembros del equipo</h2>
         <div className="relative max-w-sm">
           <IconSearch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search team members..."
+            placeholder="Buscar miembros del equipo..."
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
             className="pl-9"
@@ -300,7 +300,7 @@ export function AdminTable() {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No team members found.
+                  No se encontraron miembros del equipo.
                 </TableCell>
               </TableRow>
             )}
@@ -309,25 +309,24 @@ export function AdminTable() {
       </div>
 
       <div className="text-muted-foreground text-sm py-2">
-        {table.getFilteredRowModel().rows.length} team member(s)
+        {table.getFilteredRowModel().rows.length} miembro(s) del equipo
       </div>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove Team Member</AlertDialogTitle>
+            <AlertDialogTitle>Eliminar miembro del equipo</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to remove this team member? This action cannot be undone. They
-              will lose admin access and their account data will be permanently removed.
+              ¿Seguro que quieres eliminar a este miembro del equipo? Esta acción no se puede deshacer: perderá el acceso de administración y los datos de su cuenta se eliminarán definitivamente.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Remove
+              Eliminar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

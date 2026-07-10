@@ -25,8 +25,8 @@ import { Spinner } from "@/components/ui/spinner"
 const formSchema = z.object({
   email: z
     .string()
-    .min(1, "Email is required")
-    .email("Please enter a valid email address"),
+    .min(1, "El correo es obligatorio.")
+    .email("Introduce un correo válido."),
 })
 
 export function ForgotPasswordForm({
@@ -53,7 +53,7 @@ export function ForgotPasswordForm({
       email: data.email,
     })
     if (!user) {
-      setFormError("No account found with this email")
+      setFormError("No existe ninguna cuenta con este correo.")
       return
     }
 
@@ -82,9 +82,9 @@ export function ForgotPasswordForm({
           >
             <FieldGroup>
               <div className="flex flex-col items-center gap-2 text-center">
-                <h1 className="text-2xl font-bold">Forgot password?</h1>
+                <h1 className="text-2xl font-bold">¿Olvidaste tu contraseña?</h1>
                 <p className="text-muted-foreground text-sm text-balance">
-                  Enter your email to reset your password
+                  Introduce tu correo para restablecer tu contraseña.
                 </p>
               </div>
               {formError && (
@@ -95,13 +95,13 @@ export function ForgotPasswordForm({
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="email">Email</FieldLabel>
+                    <FieldLabel htmlFor="email">Correo</FieldLabel>
                     <Input
                       {...field}
                       id="email"
                       aria-invalid={fieldState.invalid}
                       type="email"
-                      placeholder="m@example.com"
+                      placeholder="tu@correo.com"
                       required
                     />
                     {fieldState.invalid && (
@@ -116,34 +116,34 @@ export function ForgotPasswordForm({
                   form="form-forgot-password"
                   disabled={isLoading}
                 >
-                  {isLoading ? <Spinner /> : "Reset your password"}
+                  {isLoading ? <Spinner /> : "Restablecer contraseña"}
                 </Button>
                 <Button
                   variant="ghost"
                   type="button"
-                  onClick={() => router.push("/login")}
+                  onClick={() => router.push("/acceso")}
                   disabled={isLoading}
                 >
-                  Back to login
+                  Volver al inicio de sesión
                 </Button>
               </Field>
               <FieldDescription className="text-center">
-                Remember your password? <a href="/login">Sign in</a>
+                ¿Recuerdas tu contraseña? <a href="/acceso">Inicia sesión</a>
               </FieldDescription>
             </FieldGroup>
           </form>
           <div className="bg-muted relative hidden md:block">
             <img
               src="/placeholder.svg"
-              alt="Image"
+              alt="Imagen decorativa"
               className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
             />
           </div>
         </CardContent>
       </Card>
       <FieldDescription className="px-6 text-center">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-        and <a href="#">Privacy Policy</a>.
+        Al continuar, aceptas los <a href="/terminos">Términos y Condiciones</a>{" "}
+        y la <a href="/privacidad">Política de Privacidad</a>.
       </FieldDescription>
     </div>
   )
