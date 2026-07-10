@@ -121,7 +121,15 @@ export function AccesoForm({ className, ...props }: React.ComponentProps<"div">)
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="password">Contraseña</FieldLabel>
+                    <div className="flex items-center">
+                      <FieldLabel htmlFor="password">Contraseña</FieldLabel>
+                      <Link
+                        href="/forgot-password"
+                        className="ml-auto text-sm underline-offset-2 hover:underline"
+                      >
+                        ¿Olvidaste tu contraseña?
+                      </Link>
+                    </div>
                     <PasswordInput
                       {...field}
                       id="password"
