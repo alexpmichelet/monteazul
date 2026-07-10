@@ -12,14 +12,14 @@ const isAuthRoute = createRouteMatcher([
   "/verify-email",
   "/otp",
 ]);
-const isProtectedRoute = createRouteMatcher(["/dashboard"]); // TODO : Redirect to /app by default
+// No middleware-protected routes: every signed-in page (e.g. /guardados)
+// renders its own friendly signed-out state instead of a hard redirect.
 
 export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
+  // An already-signed-in visitor has nothing to do on the auth screens —
+  // send them to the directory.
   if (isAuthRoute(request) && (await convexAuth.isAuthenticated())) {
-    return nextjsMiddlewareRedirect(request, "/dashboard");
-  }
-  if (isProtectedRoute(request) && !(await convexAuth.isAuthenticated())) {
-    return nextjsMiddlewareRedirect(request, "/login");
+    return nextjsMiddlewareRedirect(request, "/");
   }
 });
 
