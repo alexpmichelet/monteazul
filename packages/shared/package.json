@@ -13,6 +13,10 @@
     "./legal": {
       "types": "./legal.d.ts",
       "default": "./legal.js"
+    },
+    "./dom-resilience": {
+      "types": "./domResilience.d.ts",
+      "default": "./domResilience.js"
     }
   },
   "scripts": {

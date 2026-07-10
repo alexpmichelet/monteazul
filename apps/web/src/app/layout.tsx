@@ -4,6 +4,7 @@ import "./globals.css";
 import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 import { ConvexClientProvider } from "@/providers/convex-client-provider";
 import { FavoritesProvider } from "@/components/directory/favorites-context";
+import { DOM_RESILIENCE_SCRIPT } from "@packages/shared/dom-resilience";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,6 +33,8 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        {/* Must run before hydration — see @packages/shared/dom-resilience. */}
+        <script dangerouslySetInnerHTML={{ __html: DOM_RESILIENCE_SCRIPT }} />
         <ConvexClientProvider>
           <FavoritesProvider>{children}</FavoritesProvider>
         </ConvexClientProvider>
