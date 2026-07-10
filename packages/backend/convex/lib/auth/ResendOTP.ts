@@ -29,7 +29,7 @@ export const ResendOTP = Email({
     const { error } = await resend.emails.send({
       from: `${APP_NAME} <no-reply@${APP_DOMAIN}>`,
       to: [email],
-      subject: "Verify your email",
+      subject: "Verifica tu correo electrónico",
       html,
     });
 

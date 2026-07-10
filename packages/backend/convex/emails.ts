@@ -70,7 +70,7 @@ export const sendAdminInviteEmail = internalAction({
     const emailId = await resend.sendEmail(ctx, {
       from: DEFAULT_FROM,
       to: args.to,
-      subject: `You're invited to join ${APP_NAME} Admin`,
+      subject: `Invitación al equipo de administración de ${APP_NAME}`,
       html,
     });
 

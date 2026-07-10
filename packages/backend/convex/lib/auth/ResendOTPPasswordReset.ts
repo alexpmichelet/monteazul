@@ -29,7 +29,7 @@ export const ResendOTPPasswordReset = Email({
     const { error } = await resend.emails.send({
       from: `${APP_NAME} <no-reply@${APP_DOMAIN}>`,
       to: [email],
-      subject: "Reset your password",
+      subject: "Restablece tu contraseña",
       html,
     });
 
