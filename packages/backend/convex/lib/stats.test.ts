@@ -203,11 +203,44 @@ describe("evolutionSeries", () => {
     ]);
   });
 
-  test("all: no events → a single bucket for the current month", () => {
+  test("all: a single-month journal falls back to DAILY buckets so the curve can be traced (Ronda 5)", () => {
+    const series = evolutionSeries(
+      [
+        { type: "visit", timestamp: JUL5_2330 }, // 2026-07-05
+        { type: "whatsapp_click", timestamp: JUL6_11H }, // 2026-07-06
+      ],
+      "all",
+      JUL6_11H,
+    );
+    // One month of data would be ONE monthly point — no line. Daily instead,
+    // spanning at least the last 7 days (gap-filled), always ≥ 2 points.
+    expect(series.length).toBeGreaterThanOrEqual(2);
+    expect(series[0].bucket).toBe("2026-06-30");
+    expect(series[series.length - 1]).toEqual({
+      bucket: "2026-07-06",
+      visits: 0,
+      whatsappContacts: 1,
+      instagramClicks: 0,
+    });
+    expect(series).toContainEqual({
+      bucket: "2026-07-05",
+      visits: 1,
+      whatsappContacts: 0,
+      instagramClicks: 0,
+    });
+  });
+
+  test("all: no events → 7 daily zero buckets (a flat traced line, not a lone point)", () => {
     const series = evolutionSeries([], "all", JUL6_11H);
-    expect(series).toEqual([
-      { bucket: "2026-07", visits: 0, whatsappContacts: 0, instagramClicks: 0 },
-    ]);
+    expect(series).toHaveLength(7);
+    expect(
+      series.every(
+        (p) =>
+          p.visits === 0 && p.whatsappContacts === 0 && p.instagramClicks === 0,
+      ),
+    ).toBe(true);
+    expect(series[0].bucket).toBe("2026-06-30");
+    expect(series[6].bucket).toBe("2026-07-06");
   });
 });
 

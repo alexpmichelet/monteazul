@@ -153,17 +153,15 @@ describe("statsForCommerce — aggregation", () => {
         period: "all",
       });
 
-    // Totals are all-time and deterministic. With the "all" period the series
-    // is monthly and gap-filled up to the current month, so we assert the
-    // data's own month is present (exact gap-fill length is time-dependent —
-    // the day/week bucketing is pinned deterministically in lib/stats.test.ts).
+    // Totals are all-time and deterministic. The "all" series granularity
+    // depends on how far today is from the fixture dates (monthly, or daily
+    // when the journal spans a single month — Ronda 5), so assert the summed
+    // series instead of a specific bucket (the bucketing itself is pinned
+    // deterministically in lib/stats.test.ts).
     expect(stats.totals).toEqual({ visits: 2, whatsappContacts: 1, instagramClicks: 0 });
-    expect(stats.series).toContainEqual({
-      bucket: "2026-07",
-      visits: 2,
-      whatsappContacts: 1,
-      instagramClicks: 0,
-    });
+    expect(stats.series.length).toBeGreaterThanOrEqual(2);
+    expect(stats.series.reduce((sum, p) => sum + p.visits, 0)).toBe(2);
+    expect(stats.series.reduce((sum, p) => sum + p.whatsappContacts, 0)).toBe(1);
   });
 
   test("stats are scoped to the queried fiche — another fiche's events are excluded", async () => {

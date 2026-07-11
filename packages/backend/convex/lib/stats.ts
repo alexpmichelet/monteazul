@@ -200,6 +200,10 @@ function enumerateMonthKeys(sinceMs: number, nowMs: number): string[] {
  * - `week`  → the last 7 days, daily buckets;
  * - `month` → the last 30 days, daily buckets;
  * - `all`   → every month from the earliest event to `nowMs`, monthly buckets.
+ *   With fewer than TWO months in that span, a monthly series would be a
+ *   single point — recharts cannot trace a curve through it. `all` then falls
+ *   back to DAILY buckets over at least the last 7 days, so the chart always
+ *   has enough points to draw a line.
  *
  * Returns one point per bucket across the whole range (zeros included), sorted
  * ascending. `nowMs` is injected (not read from the clock) so the pure function
@@ -224,6 +228,10 @@ export function evolutionSeries(
     sinceMs = events.length
       ? events.reduce((min, e) => Math.min(min, e.timestamp), nowMs)
       : nowMs;
+    if (enumerateMonthKeys(sinceMs, nowMs).length < 2) {
+      granularity = "day";
+      sinceMs = Math.min(sinceMs, nowMs - (WEEK_LOOKBACK_DAYS - 1) * DAY_MS);
+    }
   }
 
   const counts = new Map<
