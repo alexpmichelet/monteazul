@@ -56,6 +56,21 @@ export class ConvexReactClientFake {
     };
   }
 
+  /** One-shot imperative query (the `useConvex().query(...)` path). */
+  query(
+    query: FunctionReference<"query">,
+    args?: Record<string, unknown>,
+  ): Promise<unknown> {
+    const name = getFunctionName(query);
+    const impl = this.queries.get(name);
+    if (!impl) {
+      throw new Error(
+        `Unexpected query: ${name}. Try registering it with registerQueryFake().`,
+      );
+    }
+    return Promise.resolve(impl(args ?? {}));
+  }
+
   mutation(
     mutation: FunctionReference<"mutation">,
     args?: Record<string, unknown>,

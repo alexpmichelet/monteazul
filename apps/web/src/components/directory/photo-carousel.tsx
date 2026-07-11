@@ -218,6 +218,9 @@ function PhotoViewer({
   const [index, setIndex] = React.useState(initialIndex);
   const [view, setView] = React.useState<ViewState>({ scale: 1, tx: 0, ty: 0 });
   const [isDragging, setIsDragging] = React.useState(false);
+  // Pinch in progress: the CSS transform transition must be OFF meanwhile —
+  // easing each finger move towards the target reads as a micro-bounce.
+  const [isPinching, setIsPinching] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
   const drag = React.useRef<{
     startX: number;
@@ -307,6 +310,7 @@ function PhotoViewer({
       drag.current = null;
       swipe.current = null;
       setIsDragging(false);
+      setIsPinching(true);
       return;
     }
 
@@ -368,7 +372,10 @@ function PhotoViewer({
     if (pinch.current) {
       // End the pinch once fewer than two fingers remain; the leftover finger
       // must not suddenly pan or swipe with a jump.
-      if (pointers.current.size < 2) pinch.current = null;
+      if (pointers.current.size < 2) {
+        pinch.current = null;
+        setIsPinching(false);
+      }
       return;
     }
 
@@ -424,7 +431,11 @@ function PhotoViewer({
           style={{
             transform: `translate(${view.tx}px, ${view.ty}px) scale(${view.scale})`,
             transformOrigin: "center center",
-            transition: isDragging ? undefined : "transform 120ms ease-out",
+            // The eased transition is for DISCRETE zoom steps (buttons, wheel,
+            // double click). While a finger gesture is active the image must
+            // track the fingers 1:1 — easing mid-gesture reads as a rebound.
+            transition:
+              isDragging || isPinching ? undefined : "transform 120ms ease-out",
           }}
         >
           <Image

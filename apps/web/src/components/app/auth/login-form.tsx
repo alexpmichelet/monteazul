@@ -55,6 +55,24 @@ export function LoginForm({
     },
   });
 
+  /**
+   * Chrome's autofill (and its account-picker popup) fills the inputs WITHOUT
+   * firing the events react-hook-form listens to, so the mirrored form state
+   * can lag behind what the fields visibly contain — and the submit would then
+   * send the OLD credentials (sign into the wrong account). Before validating,
+   * copy the real DOM values into the form state: exactly what is on screen is
+   * what signs in, on the first «Entrar».
+   */
+  function syncAutofilledValues(event: React.FormEvent<HTMLFormElement>) {
+    const elements = event.currentTarget.elements;
+    for (const name of ["email", "password"] as const) {
+      const input = elements.namedItem(name);
+      if (input instanceof HTMLInputElement) {
+        form.setValue(name, input.value);
+      }
+    }
+  }
+
   async function onSubmit(data: z.infer<typeof formSchema>) {
     const user = await convex.query(api.table.users.getUserByEmail, {
       email: data.email,
@@ -104,7 +122,10 @@ export function LoginForm({
           <form
             className="p-6 md:p-8"
             id="form-login"
-            onSubmit={form.handleSubmit(onSubmit)}
+            onSubmit={(event) => {
+              syncAutofilledValues(event);
+              return form.handleSubmit(onSubmit)(event);
+            }}
           >
             <FieldGroup>
               <div className="flex flex-col items-center gap-2 text-center">
