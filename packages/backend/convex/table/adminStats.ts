@@ -46,6 +46,16 @@ export const globalStats = query({
       "month",
     );
 
+    // Ingresos a la plataforma (Ronda 11): site-wide unique daily visitors,
+    // journaled in their OWN `siteVisits` table (one row per device per
+    // Bogota day — see `recordSiteVisit`). Reuses the same gap-filled series
+    // machinery by mapping each Ingreso to a visit-shaped event.
+    const siteVisitRows = await ctx.db.query("siteVisits").collect();
+    const siteVisitEvents = siteVisitRows.map((row) => ({
+      type: "visit" as const,
+      timestamp: row.timestamp,
+    }));
+
     return {
       ...base,
       series: evolutionSeries(
@@ -53,6 +63,12 @@ export const globalStats = query({
         args.period,
         Date.now(),
       ),
+      siteTraffic: {
+        total: siteVisitRows.length,
+        series: evolutionSeries(siteVisitEvents, args.period, Date.now()).map(
+          (bucket) => ({ bucket: bucket.bucket, count: bucket.visits }),
+        ),
+      },
     };
   },
 });

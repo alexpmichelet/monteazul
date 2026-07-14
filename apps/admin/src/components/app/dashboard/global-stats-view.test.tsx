@@ -11,6 +11,9 @@ import { GlobalStatsView } from "./global-stats-view";
 vi.mock("@/components/app/entrepreneur/stats-evolution-chart", () => ({
   StatsEvolutionChart: () => <div data-testid="evolution-chart" />,
 }));
+vi.mock("@/components/app/dashboard/site-traffic-chart", () => ({
+  SiteTrafficChart: () => <div data-testid="site-traffic-chart" />,
+}));
 
 const FULL = {
   totals: { visits: 128, whatsappContacts: 34, instagramClicks: 11 },
@@ -22,6 +25,13 @@ const FULL = {
       instagramClicks: 11,
     },
   ],
+  siteTraffic: {
+    total: 57,
+    series: [
+      { bucket: "2026-07-05", count: 21 },
+      { bucket: "2026-07-06", count: 36 },
+    ],
+  },
   estadoBreakdown: [
     { estado: "pendiente" as const, count: 2 },
     { estado: "publicado" as const, count: 5 },
@@ -50,6 +60,20 @@ describe("GlobalStatsView", () => {
     expect(screen.getByTestId("global-stat-instagram-value").textContent).toBe(
       "11",
     );
+  });
+
+  it("renders the site-traffic total and its own chart (Ronda 11)", () => {
+    const client = new ConvexReactClientFake();
+    client.registerQueryFake(api.table.adminStats.globalStats, () => FULL);
+
+    renderWithConvex(<GlobalStatsView />, { client });
+
+    expect(screen.getByTestId("global-stat-ingresos-value").textContent).toBe(
+      "57",
+    );
+    // Twice: the StatCard label and the dedicated card's title.
+    expect(screen.getAllByText("Ingresos a la plataforma")).toHaveLength(2);
+    expect(screen.getByTestId("site-traffic-chart")).toBeTruthy();
   });
 
   it("renders the count of Commerces per Estado", () => {

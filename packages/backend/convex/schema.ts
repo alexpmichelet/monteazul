@@ -5,6 +5,7 @@ import { commerces } from "./table/commerces";
 import { events } from "./table/events";
 import { favorites } from "./table/favorites";
 import { feedback } from "./table/feedback";
+import { siteVisits } from "./table/siteVisits";
 import { users } from "./table/users";
 
 export default defineSchema({
@@ -14,5 +15,6 @@ export default defineSchema({
   events,
   favorites,
   feedback,
+  siteVisits,
   users,
 });

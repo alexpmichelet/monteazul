@@ -4,6 +4,7 @@ import "./globals.css";
 import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 import { ConvexClientProvider } from "@/providers/convex-client-provider";
 import { FavoritesProvider } from "@/components/directory/favorites-context";
+import { SiteVisitTracker } from "@/components/app/site-visit-tracker";
 import { DOM_RESILIENCE_SCRIPT } from "@packages/shared/dom-resilience";
 
 const geistSans = Geist({
@@ -36,6 +37,8 @@ export default function RootLayout({
         {/* Must run before hydration — see @packages/shared/dom-resilience. */}
         <script dangerouslySetInnerHTML={{ __html: DOM_RESILIENCE_SCRIPT }} />
         <ConvexClientProvider>
+          {/* One Ingreso per device per Bogota day, whatever the entry page. */}
+          <SiteVisitTracker />
           <FavoritesProvider>{children}</FavoritesProvider>
         </ConvexClientProvider>
       </body>

@@ -7,6 +7,7 @@ import {
   IconBrandWhatsapp,
   IconBuildingStore,
   IconEye,
+  IconUsers,
 } from "@tabler/icons-react";
 import { api } from "@packages/backend/convex/_generated/api";
 
@@ -37,6 +38,7 @@ import {
   type StatsPeriod,
 } from "@/components/app/entrepreneur/granularity";
 import { StatsEvolutionChart } from "@/components/app/entrepreneur/stats-evolution-chart";
+import { SiteTrafficChart } from "@/components/app/dashboard/site-traffic-chart";
 import { StatCard } from "@/components/app/stats/stat-card";
 
 /**
@@ -68,7 +70,13 @@ export function GlobalStatsView() {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          label="Ingresos a la plataforma"
+          value={stats?.siteTraffic.total ?? 0}
+          testId="global-stat-ingresos-value"
+          icon={<IconUsers className="size-5" />}
+        />
         <StatCard
           label="Visitas"
           value={stats?.totals.visits ?? 0}
@@ -162,6 +170,28 @@ export function GlobalStatsView() {
             </div>
           ) : (
             <StatsEvolutionChart series={stats.series} period={period} />
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Ingresos a la plataforma (Ronda 11) — site-wide unique daily
+          visitors, on the SAME period selector as the Evolución card. */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle>Ingresos a la plataforma</CardTitle>
+          <CardDescription>
+            Visitantes únicos del sitio: cada dispositivo cuenta una sola vez
+            al día (corte a medianoche de Colombia). Sigue el período
+            seleccionado arriba.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {stats === undefined ? (
+            <div className="flex h-[220px] items-center justify-center">
+              <Spinner className="h-8 w-8" />
+            </div>
+          ) : (
+            <SiteTrafficChart series={stats.siteTraffic.series} period={period} />
           )}
         </CardContent>
       </Card>
