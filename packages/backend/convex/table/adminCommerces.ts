@@ -270,7 +270,7 @@ export const reorderCategory = mutation({
  * with plain filters — they stay tiny at this product's scale, and it keeps
  * us independent of the library's internal index names.
  */
-async function deleteAccountCascade(
+export async function deleteAccountCascade(
   ctx: MutationCtx,
   userId: Id<"users">,
 ): Promise<void> {
