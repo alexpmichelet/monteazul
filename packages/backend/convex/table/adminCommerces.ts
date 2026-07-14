@@ -263,8 +263,67 @@ export const reorderCategory = mutation({
 });
 
 /**
- * Definitive removal of a fiche from ANY estado (the UI confirms first). Also
- * deletes the fiche's photo blobs from storage so none linger. Admin only.
+ * Delete an account and everything Convex Auth holds for it, so its correo is
+ * FREE to register again: the user's own Favoris, the auth accounts (email +
+ * password hash) with their pending verification codes, the sessions with
+ * their refresh tokens, and the `users` row itself. The auth tables are read
+ * with plain filters — they stay tiny at this product's scale, and it keeps
+ * us independent of the library's internal index names.
+ */
+async function deleteAccountCascade(
+  ctx: MutationCtx,
+  userId: Id<"users">,
+): Promise<void> {
+  const favorites = await ctx.db
+    .query("favorites")
+    .withIndex("by_user", (q) => q.eq("userId", userId))
+    .collect();
+  for (const favorite of favorites) {
+    await ctx.db.delete(favorite._id);
+  }
+
+  const accounts = await ctx.db
+    .query("authAccounts")
+    .filter((q) => q.eq(q.field("userId"), userId))
+    .collect();
+  for (const account of accounts) {
+    const codes = await ctx.db
+      .query("authVerificationCodes")
+      .filter((q) => q.eq(q.field("accountId"), account._id))
+      .collect();
+    for (const code of codes) {
+      await ctx.db.delete(code._id);
+    }
+    await ctx.db.delete(account._id);
+  }
+
+  const sessions = await ctx.db
+    .query("authSessions")
+    .filter((q) => q.eq(q.field("userId"), userId))
+    .collect();
+  for (const session of sessions) {
+    const tokens = await ctx.db
+      .query("authRefreshTokens")
+      .filter((q) => q.eq(q.field("sessionId"), session._id))
+      .collect();
+    for (const token of tokens) {
+      await ctx.db.delete(token._id);
+    }
+    await ctx.db.delete(session._id);
+  }
+
+  await ctx.db.delete(userId);
+}
+
+/**
+ * Definitive removal of a fiche from ANY estado (the UI confirms first).
+ * PHYSICAL deletion, chosen over a logical one so the correo is freed for a
+ * new registration (Ronda 10): deletes the photo blobs, the fiche's tracking
+ * Événements and the Favoris pointing at it, the fiche itself — and, when the
+ * owner is a pure `entreprise` account (which exists only to manage this one
+ * fiche, 1:1), the whole account with its auth credentials. An `admin` owner
+ * is NEVER deleted: removing their fiche must not nuke the admin account.
+ * Admin only.
  */
 export const removeCommerce = mutation({
   args: { commerceId: v.id("commerces") },
@@ -274,9 +333,33 @@ export const removeCommerce = mutation({
     if (!commerce) {
       throw new ConvexError({ message: "Negocio no encontrado." });
     }
+
     for (const storageId of commerce.photos) {
       await ctx.storage.delete(storageId);
     }
+
+    // The fiche's journal and the hearts other users put on it — orphan rows
+    // would keep counting in the site-wide totals.
+    const events = await ctx.db
+      .query("events")
+      .withIndex("by_commerce", (q) => q.eq("commerceId", args.commerceId))
+      .collect();
+    for (const event of events) {
+      await ctx.db.delete(event._id);
+    }
+    const favorites = await ctx.db
+      .query("favorites")
+      .withIndex("by_commerce", (q) => q.eq("commerceId", args.commerceId))
+      .collect();
+    for (const favorite of favorites) {
+      await ctx.db.delete(favorite._id);
+    }
+
     await ctx.db.delete(args.commerceId);
+
+    const owner = await ctx.db.get(commerce.ownerId);
+    if (owner && owner.role === "entreprise") {
+      await deleteAccountCascade(ctx, commerce.ownerId);
+    }
   },
 });

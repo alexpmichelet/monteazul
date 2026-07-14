@@ -77,7 +77,9 @@ export function SignupForm({
       email: data.email,
     })
     if (existing) {
-      setFormError("Ya existe una cuenta con este correo. Inicia sesión.")
+      setFormError(
+        "Este correo ya está registrado. Inicia sesión o usa «¿Olvidaste tu contraseña?» para recuperarla.",
+      )
       return
     }
     setIsLoading(true)

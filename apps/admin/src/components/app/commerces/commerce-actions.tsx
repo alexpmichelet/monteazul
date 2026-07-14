@@ -145,7 +145,8 @@ export function RemoveCommerceButton({
           <AlertDialogTitle>Eliminar negocio</AlertDialogTitle>
           <AlertDialogDescription>
             Esta acción es definitiva y no se puede deshacer. Se eliminarán la
-            ficha y todas sus fotos.
+            ficha, sus fotos, sus estadísticas y la cuenta del negocio — el
+            correo quedará libre para registrarse de nuevo.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

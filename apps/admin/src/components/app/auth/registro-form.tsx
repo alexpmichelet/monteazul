@@ -2,11 +2,13 @@
 
 import * as React from "react";
 import { useAuthActions } from "@convex-dev/auth/react";
+import { useConvex } from "convex/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { api } from "@packages/backend/convex/_generated/api";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -54,6 +56,7 @@ type FormValues = z.infer<typeof formSchema>;
 export function RegistroForm({ className, ...props }: React.ComponentProps<"div">) {
   const router = useRouter();
   const { signIn } = useAuthActions();
+  const convex = useConvex();
   const [formError, setFormError] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
 
@@ -70,6 +73,17 @@ export function RegistroForm({ className, ...props }: React.ComponentProps<"div"
 
   async function onSubmit(data: FormValues) {
     setFormError(null);
+    // Surface the "correo already registered" case with a clear, actionable
+    // message instead of the generic sign-up failure (Ronda 10).
+    const existing = await convex.query(api.table.users.getUserByEmail, {
+      email: data.email,
+    });
+    if (existing) {
+      setFormError(
+        "Este correo ya está registrado. Inicia sesión o usa «¿Olvidaste tu contraseña?» para recuperarla.",
+      );
+      return;
+    }
     setIsLoading(true);
     try {
       const { signingIn } = await signIn("password", {

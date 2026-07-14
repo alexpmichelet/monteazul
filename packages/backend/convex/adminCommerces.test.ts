@@ -602,6 +602,92 @@ describe("updateCommerce", () => {
 // -----------------------------------------------------------------------------
 
 describe("removeCommerce", () => {
+  test("libera el correo: elimina ficha, journal, favoritos y la cuenta entreprise con sus credenciales", async () => {
+    const t = convexTest(schema, modules);
+    const admin = await makeUser(t, "a@example.com", "admin");
+    const owner = await t.run((ctx) =>
+      ctx.db.insert("users", { email: "negocio@example.com", role: "entreprise" }),
+    );
+    const fan = await makeUser(t, "fan@example.com", "user");
+    const commerceId = await insertCommerce(t, owner, {
+      name: "Se elimina",
+      category: "Tecnología",
+      estado: "publicado",
+    });
+
+    // Everything Convex Auth + the product hold around the account.
+    const accountId = await t.run((ctx) =>
+      ctx.db.insert("authAccounts", {
+        userId: owner,
+        provider: "password",
+        providerAccountId: "negocio@example.com",
+        secret: "hash",
+      }),
+    );
+    await t.run(async (ctx) => {
+      await ctx.db.insert("authVerificationCodes", {
+        accountId,
+        provider: "password",
+        code: "123456",
+        expirationTime: Date.now() + 60_000,
+      });
+      const sessionId = await ctx.db.insert("authSessions", {
+        userId: owner,
+        expirationTime: Date.now() + 60_000,
+      });
+      await ctx.db.insert("authRefreshTokens", {
+        sessionId,
+        expirationTime: Date.now() + 60_000,
+      });
+      // The owner saved someone; someone saved the fiche; the fiche has stats.
+      await ctx.db.insert("favorites", { userId: owner, commerceId });
+      await ctx.db.insert("favorites", { userId: fan, commerceId });
+      await ctx.db.insert("events", {
+        type: "whatsapp_click",
+        commerceId,
+        timestamp: Date.now(),
+        visitorId: "anon-1",
+      });
+    });
+
+    await t
+      .withIdentity({ subject: admin })
+      .mutation(api.table.adminCommerces.removeCommerce, { commerceId });
+
+    await t.run(async (ctx) => {
+      expect(await ctx.db.get(commerceId)).toBeNull();
+      expect(await ctx.db.get(owner)).toBeNull();
+      expect(await ctx.db.query("authAccounts").collect()).toEqual([]);
+      expect(await ctx.db.query("authVerificationCodes").collect()).toEqual([]);
+      expect(await ctx.db.query("authSessions").collect()).toEqual([]);
+      expect(await ctx.db.query("authRefreshTokens").collect()).toEqual([]);
+      expect(await ctx.db.query("favorites").collect()).toEqual([]);
+      expect(await ctx.db.query("events").collect()).toEqual([]);
+      // The bystanders survive.
+      expect(await ctx.db.get(fan)).not.toBeNull();
+      expect(await ctx.db.get(admin)).not.toBeNull();
+    });
+  });
+
+  test("nunca elimina una cuenta admin al borrar su ficha", async () => {
+    const t = convexTest(schema, modules);
+    const admin = await makeUser(t, "a@example.com", "admin");
+    const commerceId = await insertCommerce(t, admin, {
+      name: "Ficha del admin",
+      category: "Tecnología",
+      estado: "publicado",
+    });
+
+    await t
+      .withIdentity({ subject: admin })
+      .mutation(api.table.adminCommerces.removeCommerce, { commerceId });
+
+    await t.run(async (ctx) => {
+      expect(await ctx.db.get(commerceId)).toBeNull();
+      expect(await ctx.db.get(admin)).not.toBeNull();
+    });
+  });
+
   test("removes a fiche from any estado", async () => {
     const t = convexTest(schema, modules);
     const admin = await makeUser(t, "a@example.com", "admin");

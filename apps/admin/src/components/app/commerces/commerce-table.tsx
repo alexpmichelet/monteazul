@@ -268,8 +268,11 @@ export function CommerceTable() {
         </div>
 
         {/* Manual public order — per category, behind an explicit toggle so
-            rows never move by accident. */}
-        <div className="flex flex-col items-start gap-1.5">
+            rows never move by accident. Same label-above structure as the
+            other controls, so the row stays aligned; the aviso renders UNDER
+            the whole row (it must not push the button out of line). */}
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-xs">Orden</Label>
           <Button
             type="button"
             variant={reordering ? "default" : "outline"}
@@ -283,17 +286,18 @@ export function CommerceTable() {
             <ArrowUpDown className="mr-1 size-4" />
             {reordering ? "Listo" : "Reordenar"}
           </Button>
-          {category === "" ? (
-            <span className="text-muted-foreground text-xs">
-              Selecciona una categoría para reordenar.
-            </span>
-          ) : reordering ? (
-            <span className="text-muted-foreground text-xs">
-              Arrastra las filas o edita el número de posición.
-            </span>
-          ) : null}
         </div>
       </div>
+
+      {category === "" ? (
+        <p className="text-muted-foreground -mt-2 text-xs">
+          Selecciona una categoría para reordenar.
+        </p>
+      ) : reordering ? (
+        <p className="text-muted-foreground -mt-2 text-xs">
+          Arrastra las filas o edita el número de posición.
+        </p>
+      ) : null}
 
       {commerces === undefined ? (
         <div className="flex h-48 items-center justify-center">
