@@ -57,7 +57,6 @@ export type CommerceFieldsValues = {
   description: string;
   infoExtra?: string;
   whatsapp: string;
-  torreApto?: string;
   instagram?: string;
   contactName: string;
   resides: string;
@@ -241,7 +240,7 @@ export function CommerceContactFields({
   );
 }
 
-/** « Ubicación y detalles » — torre/apto, resides, internal notes. */
+/** « Ubicación y detalles » — resides, internal notes. */
 export function CommerceLocationFields({
   control,
   options,
@@ -255,17 +254,6 @@ export function CommerceLocationFields({
 }) {
   return (
     <>
-      <Controller
-        name="torreApto"
-        control={control}
-        render={({ field }) => (
-          <Field>
-            <FieldLabel htmlFor="torreApto">Torre y apartamento</FieldLabel>
-            <Input {...field} id="torreApto" placeholder="Torre 4 · Apto 926" />
-          </Field>
-        )}
-      />
-
       <Controller
         name="resides"
         control={control}

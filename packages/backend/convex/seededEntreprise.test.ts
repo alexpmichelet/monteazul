@@ -28,7 +28,6 @@ const validFiche = {
   description: "Pan artesanal horneado a diario en el barrio.",
   whatsapp: "3001234567",
   horario: { mode: "semanal" as const, windows: [{ dayOfWeek: 1, from: 450, to: 960 }] },
-  torreApto: "Torre 4 · Apto 926",
   instagram: "https://instagram.com/panaderiaelsol",
   contactName: "María López",
   resides: "Resido en Monteazul" as const,

@@ -256,7 +256,8 @@ export function buildImportPlan(
       description: cell("Descripción"),
       whatsapp,
       horario,
-      torreApto: optional(cell("Torre y apartamento")),
+      // "Torre y apartamento" is still parsed as a CSV column (historical
+      // format) but no longer lands on the fiche (Ronda 12 - legacy field).
       instagram: optional(cell("Instagram / redes")),
       contactName: optional(cell("Nombre de contacto")),
       resides,

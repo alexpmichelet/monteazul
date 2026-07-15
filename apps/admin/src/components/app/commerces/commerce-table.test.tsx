@@ -29,7 +29,6 @@ function makeCommerce(
     coverFocusX: undefined,
     coverZoom: undefined,
     horario: undefined,
-    torreApto: undefined,
     instagram: undefined,
     contactName: undefined,
     resides: "Resido en Monteazul",

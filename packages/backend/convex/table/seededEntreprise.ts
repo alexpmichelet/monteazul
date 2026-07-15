@@ -46,7 +46,6 @@ export const createSeededEntreprise = mutation({
     infoExtra: v.optional(v.string()),
     whatsapp: v.string(),
     horario: horarioValidator,
-    torreApto: v.optional(v.string()),
     instagram: v.optional(v.string()),
     contactName: v.optional(v.string()),
     resides: v.string(),

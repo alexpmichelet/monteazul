@@ -81,7 +81,6 @@ export function ApprovalQueue() {
               <Row label="Descripción" value={commerce.description} />
               <Row label="WhatsApp" value={commerce.whatsapp} />
               <Row label="Horario" value={horarioSummary(commerce.horario)} />
-              <Row label="Torre y apartamento" value={commerce.torreApto} />
               <Row label="Instagram" value={commerce.instagram} />
               <Row label="Nombre de contacto" value={commerce.contactName} />
               <Row label="Propietario" value={commerce.ownerEmail} />

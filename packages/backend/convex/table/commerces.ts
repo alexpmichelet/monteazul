@@ -63,6 +63,9 @@ const documentSchema = {
   // admin reorders it.
   sortOrder: v.optional(v.number()),
   horario: v.optional(horarioValidator),
+  // LEGACY (Ronda 12): torre/apartamento is no longer collected, written nor
+  // displayed anywhere — the platform expands beyond Monteazul. The field
+  // stays optional so pre-existing rows remain valid, inert.
   torreApto: v.optional(v.string()),
   instagram: v.optional(v.string()),
   contactName: v.optional(v.string()),
@@ -139,8 +142,7 @@ export async function toPublicCommerce(ctx: QueryCtx, doc: Doc<"commerces">) {
     coverFocusX: doc.coverFocusX,
     coverZoom: doc.coverZoom,
     horario: doc.horario,
-    // `torreApto` is deliberately NOT exposed: the tower/apartment is internal
-    // context for the admin and the owner, never shown on the public fiche.
+    // `torreApto` (legacy, no longer collected) stays unexposed as ever.
     instagram: doc.instagram,
     contactName: doc.contactName,
   };
@@ -294,7 +296,6 @@ export async function toOwnerCommerce(ctx: QueryCtx, doc: Doc<"commerces">) {
     coverFocusX: doc.coverFocusX,
     coverZoom: doc.coverZoom,
     horario: doc.horario,
-    torreApto: doc.torreApto,
     instagram: doc.instagram,
     contactName: doc.contactName,
     resides: doc.resides,
@@ -419,7 +420,6 @@ export const submitCommerce = mutation({
     infoExtra: v.optional(v.string()),
     whatsapp: v.string(),
     horario: horarioValidator,
-    torreApto: v.optional(v.string()),
     instagram: v.optional(v.string()),
     contactName: v.optional(v.string()),
     resides: v.string(),
@@ -527,7 +527,6 @@ export const updateMyCommerce = mutation({
     infoExtra: v.optional(v.string()),
     whatsapp: v.string(),
     horario: horarioValidator,
-    torreApto: v.optional(v.string()),
     instagram: v.optional(v.string()),
     contactName: v.optional(v.string()),
     resides: v.string(),
