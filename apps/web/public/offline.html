@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sin conexión — Directorio Monteazul</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #1f3149;
+        color: #ece9e0;
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+        text-align: center;
+      }
+      main { padding: 32px; max-width: 320px; }
+      img { width: 96px; height: 96px; border-radius: 24px; }
+      h1 { font-size: 20px; margin: 20px 0 8px; }
+      p { font-size: 14px; line-height: 1.6; margin: 0; opacity: 0.85; }
+      button {
+        margin-top: 22px;
+        padding: 12px 26px;
+        border: 0;
+        border-radius: 12px;
+        background: #ece9e0;
+        color: #1f3149;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="/icons/icon-192.png" alt="" />
+      <h1>Sin conexión</h1>
+      <p>
+        No pudimos cargar el directorio. Revisa tu conexión a internet e
+        inténtalo de nuevo.
+      </p>
+      <button onclick="location.reload()">Reintentar</button>
+    </main>
+  </body>
+</html>
